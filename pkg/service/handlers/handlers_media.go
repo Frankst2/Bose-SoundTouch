@@ -11,7 +11,7 @@ import (
 //go:embed web/index.html
 var indexHTML []byte
 
-//go:embed web/css/* web/js/*
+//go:embed web/migration/* web/stockholm-mini/* web/shared/*
 var webFS embed.FS
 
 //go:embed static/media/*

@@ -76,6 +76,7 @@ The `soundtouch-service` is a local server that emulates Bose's cloud services. 
 - **🔌 Easy Setup**: Activate SSH via USB stick (`remote_services` file)
 - **🔧 Device Migration**: Seamlessly transition devices to local control
 - **🌐 Web Management UI**: Easy browser-based setup and management
+- **🎮 Stockholm Mini**: A minimal reverse-engineered UI for device control (accessible at `/web/stockholm-mini/`)
 - **💾 Persistent Data**: Store presets, recents, and sources locally
 - **📝 HTTP Recording**: Persist all interactions as re-playable `.http` files
 - **🧹 Session Management**: Manage and cleanup recorded interaction sessions

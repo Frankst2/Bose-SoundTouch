@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gesellix/bose-soundtouch/pkg/client"
 	"github.com/gesellix/bose-soundtouch/pkg/models"
 
 	"github.com/gesellix/bose-soundtouch/pkg/service/certmanager"
@@ -115,6 +116,10 @@ type DeviceInfoXML struct {
 		SoftwareVersion string `xml:"softwareVersion"`
 		SerialNumber    string `xml:"serialNumber"`
 	} `xml:"components>component" json:"-"`
+
+	// Enriched fields (not part of device /info XML)
+	NowPlaying *models.NowPlaying `json:"nowPlaying,omitempty"`
+	Volume     *models.Volume     `json:"volume,omitempty"`
 }
 
 // GetLiveDeviceInfo fetches live information from the speaker's :8090/info endpoint.
@@ -150,6 +155,16 @@ func (m *Manager) GetLiveDeviceInfo(deviceIP string) (*DeviceInfoXML, error) {
 				infoXML.SerialNumber = comp.SerialNumber
 			}
 		}
+	}
+
+	// Enrich with live now playing and volume via device API (best-effort)
+	c := client.NewClientFromHost(deviceIP)
+	if vol, err := c.GetVolume(); err == nil {
+		infoXML.Volume = vol
+	}
+
+	if np, err := c.GetNowPlaying(); err == nil {
+		infoXML.NowPlaying = np
 	}
 
 	return &infoXML, nil

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -478,4 +479,24 @@ func (s *Server) findExistingDeviceInfo(d models.DiscoveredDevice) *models.Servi
 	}
 
 	return nil
+}
+
+// lookupIP resolves a deviceId to its last known device IP.
+func (s *Server) lookupIP(deviceId string) (string, error) {
+	devices, err := s.ds.ListAllDevices()
+	if err != nil {
+		return "", err
+	}
+
+	for i := range devices {
+		if devices[i].DeviceID == deviceId {
+			if devices[i].IPAddress == "" {
+				return "", fmt.Errorf("no IP known for deviceId %s", deviceId)
+			}
+
+			return devices[i].IPAddress, nil
+		}
+	}
+
+	return "", fmt.Errorf("deviceId %s not found", deviceId)
 }

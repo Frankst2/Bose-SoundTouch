@@ -207,23 +207,23 @@ Device migration switches your SoundTouch devices from Bose's cloud services to 
 
 ```bash
 # Get migration summary first
-curl http://localhost:8000/setup/migration-summary/192.168.1.100
+curl http://localhost:8000/setup/devices/192.168.1.100/summary
 
 # Perform migration
-curl -X POST http://localhost:8000/setup/migrate/192.168.1.100
+curl -X POST http://localhost:8000/setup/devices/192.168.1.100/migrate
 
 # Verify migration status
-curl http://localhost:8000/setup/devices
+curl http://localhost:8000/devices
 ```
 
 #### Advanced Migration Options
 
 ```bash
 # Migration with proxy fallback for original services
-curl -X POST "http://localhost:8000/setup/migrate/192.168.1.100?proxy_url=http://localhost:8000&marge=original&stats=original"
+curl -X POST "http://localhost:8000/setup/devices/192.168.1.100/migrate?proxy_url=http://localhost:8000&marge=original&stats=original"
 
 # Migration with custom target URL
-curl -X POST "http://localhost:8000/setup/migrate/192.168.1.100?target_url=https://my-server.com:8000"
+curl -X POST "http://localhost:8000/setup/devices/192.168.1.100/migrate?target_url=https://my-server.com:8000"
 ```
 
 ### Post-Migration Verification
@@ -232,13 +232,13 @@ After migration, verify the device is working correctly:
 
 ```bash
 # Check device status
-curl http://localhost:8000/setup/devices
+curl http://localhost:8000/devices
 
 # Test preset functionality
 curl "http://192.168.1.100:8090/presets"
 
 # Monitor device events (if needed)
-curl "http://localhost:8000/events/192.168.1.100"
+curl "http://localhost:8000/devices/08DF1F0BA325/events"
 ```
 
 #### ResolvConf Migration (DHCP-Aware DNS Redirection)
@@ -314,7 +314,7 @@ Even without migrating a device, you can use the DNS server to discover what a d
 
 ### Discovery & Setup
 
-#### `GET /setup/devices`
+#### `GET /devices`
 Lists all discovered SoundTouch devices with their current status.
 
 **Response:**
@@ -335,10 +335,10 @@ Lists all discovered SoundTouch devices with their current status.
 #### `POST /setup/discover`
 Triggers immediate network device discovery.
 
-#### `GET /setup/info/{deviceIP}`
+#### `GET /devices/{deviceIP}/info`
 Gets detailed device information and configuration.
 
-#### `GET /setup/migration-summary/{deviceIP}`
+#### `GET /setup/devices/{deviceIP}/summary`
 Analyzes device configuration and provides migration preview.
 
 **Response:**
@@ -355,7 +355,7 @@ Analyzes device configuration and provides migration preview.
 }
 ```
 
-#### `POST /setup/migrate/{deviceIP}`
+#### `POST /setup/devices/{deviceIP}/migrate`
 Migrates device to use local services.
 
 **Query Parameters:**
@@ -365,6 +365,33 @@ Migrates device to use local services.
 - `stats`: Set to "original" to proxy stats requests (optional)
 - `sw_update`: Set to "original" to proxy update requests (optional)
 - `bmx`: Set to "original" to proxy BMX requests (optional)
+
+#### `POST /setup/devices/{deviceIP}/revert`
+Reverts device to Bose cloud defaults.
+
+#### `POST /setup/devices/{deviceIP}/trust-ca`
+Injects the AfterTouch root CA into the device's trust store.
+
+#### `POST /setup/devices/{deviceIP}/sync`
+Syncs presets and recents from the device to local storage.
+
+#### `POST /setup/devices/{deviceIP}/backup`
+Creates a backup of the current device configuration.
+
+#### `POST /setup/devices/{deviceIP}/ensure-remote-services`
+Enables persistent SSH/remote services on the device.
+
+#### `POST /setup/devices/{deviceIP}/remove-remote-services`
+Removes persistent SSH/remote services from the device.
+
+#### `POST /setup/devices/{deviceIP}/test-connection`
+Tests HTTPS connection from device to service.
+
+#### `POST /setup/devices/{deviceIP}/test-hosts`
+Tests /etc/hosts redirection on the device.
+
+#### `POST /setup/devices/{deviceIP}/test-dns`
+Tests DNS redirection on the device.
 
 ### BMX Services (Bose Media eXchange)
 
@@ -614,13 +641,13 @@ find data/stats/ -name "*.json" -mtime +90 -delete
 - **Description**: Browser-based guided flow for discovery, data sync, and migration.
 
 ### Setup API
-- `GET /setup/devices`: List all known (auto-discovered and manual) devices.
-- `POST /setup/devices`: Manually add a device by IP.
+- `GET /devices`: List all known (auto-discovered and manual) devices.
+- `POST /devices`: Manually add a device by IP.
 - `POST /setup/discover`: Trigger a new network discovery scan.
 - `GET /setup/discovery-status`: Check if a scan is currently in progress.
-- `POST /setup/sync/{deviceIP}`: Fetch presets, recents, and sources from a device.
-- `GET /setup/summary/{deviceIP}`: Get a detailed migration readiness summary.
-- `POST /setup/migrate/{deviceIP}`: Migrate a device using the specified method (XML/Hosts).
+- `POST /devices/{deviceIP}/sync`: Fetch presets, recents, and sources from a device.
+- `GET /devices/{deviceIP}/summary`: Get a detailed migration readiness summary.
+- `POST /devices/{deviceIP}/migrate`: Migrate a device using the specified method (XML/Hosts).
 - `GET /setup/ca.crt`: Download the Root CA certificate for manual installation.
 
 #### `GET /setup/interactions`
@@ -767,7 +794,7 @@ soundtouch:
     name: "Living Room Speaker"
     
 rest:
-  - resource: "http://localhost:8000/setup/devices"
+  - resource: "http://localhost:8000/devices"
     scan_interval: 60
     sensor:
       - name: "SoundTouch Devices"

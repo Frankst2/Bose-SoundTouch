@@ -103,8 +103,9 @@ async function updateSettings() {
 
 async function fetchDevices() {
     try {
-        const response = await fetch('/setup/devices');
+        const response = await fetch('/devices');
         const devices = await response.json();
+        window._knownDevices = devices; // Store globally for easy lookup
         const container = document.getElementById('device-list');
         const syncSelector = document.getElementById('sync-device-list');
         const migrationSelector = document.getElementById('migration-device-list');
@@ -134,20 +135,20 @@ async function fetchDevices() {
                         <td class="col-fw-serial"><div class="col-firmware">${d.firmware_version || '0.0.0'}</div><div class="col-serial" style="font-size: 0.8em; color: #666;">${d.device_serial_number}</div></td>
                         <td class="col-method">${methodLabel}</td>
                         <td>
-                            <button onclick="prepareSync('${d.ip_address}')">Sync Data</button>
-                            <button onclick="prepareMigration('${d.ip_address}')">Migrate</button>
+                            <button onclick="prepareSync('${d.device_id}')">Sync Data</button>
+                            <button onclick="prepareMigration('${d.device_id}')">Migrate</button>
                             <button class="btn-danger" onclick="removeDevice('${d.device_id}', '${d.name}')">Remove</button>
                         </td>
                     </tr>
                 `;
 
                 const optSync = document.createElement('option');
-                optSync.value = d.ip_address;
+                optSync.value = d.device_id;
                 optSync.textContent = `${d.name} (${d.ip_address})`;
                 syncSelector.appendChild(optSync);
 
                 const optMigrate = document.createElement('option');
-                optMigrate.value = d.ip_address;
+                optMigrate.value = d.device_id;
                 optMigrate.textContent = `${d.name} (${d.ip_address})`;
                 migrationSelector.appendChild(optMigrate);
 
@@ -166,22 +167,22 @@ async function fetchDevices() {
             if (eventSelector && currentEventVal) eventSelector.value = currentEventVal;
 
             // Asynchronously fetch live info for each device
-            devices.forEach(d => updateDeviceInfo(d.ip_address));
+            devices.forEach(d => updateDeviceInfo(d.device_id));
         }
     } catch (error) {
         document.getElementById('device-list').innerHTML = 'Error loading devices: ' + error;
     }
 }
 
-function prepareSync(ip) {
-    document.getElementById('sync-device-list').value = ip;
+function prepareSync(deviceId) {
+    document.getElementById('sync-device-list').value = deviceId;
     openTab(null, 'tab-sync');
 }
 
-function prepareMigration(ip) {
-    document.getElementById('migration-device-list').value = ip;
+function prepareMigration(deviceId) {
+    document.getElementById('migration-device-list').value = deviceId;
     openTab(null, 'tab-migration');
-    showSummary(ip);
+    showSummary(deviceId);
 }
 
 function openTab(evt, tabId) {
@@ -220,25 +221,48 @@ function openTab(evt, tabId) {
     }
 }
 
+function getDeviceLabel(deviceId) {
+    if (window._knownDevices) {
+        const d = window._knownDevices.find(dev => dev.device_id === deviceId);
+        if (d) {
+            return `${d.name} (${d.ip_address})`;
+        }
+    }
+    // Fallback to searching the UI
+    const rows = document.querySelectorAll('#device-list tr');
+    for (let r of rows) {
+        const deviceIdCol = r.querySelector('.col-deviceid');
+        if (deviceIdCol && deviceIdCol.innerText === deviceId) {
+            const nameEl = r.querySelector('.col-name');
+            const ipEl = r.querySelector('.col-ip');
+            if (nameEl && ipEl) {
+                return `${nameEl.innerText} (${ipEl.innerText})`;
+            }
+        }
+    }
+    return deviceId;
+}
+
 async function startSync() {
-    const ip = document.getElementById('sync-device-list').value;
-    if (!ip) {
+    const deviceId = document.getElementById('sync-device-list').value;
+    if (!deviceId) {
         alert('Please select a device first');
         return;
     }
 
+    const deviceLabel = getDeviceLabel(deviceId);
     const status = document.getElementById('sync-status');
     const results = document.getElementById('sync-results');
     const log = document.getElementById('sync-log');
 
     status.style.display = 'block';
     status.style.backgroundColor = '#eef';
-    status.textContent = 'Syncing data from ' + ip + '...';
+    status.textContent = 'Syncing data from ' + deviceLabel + '...';
     results.style.display = 'none';
     log.innerHTML = '';
 
     try {
-        const response = await fetch('/setup/sync/' + ip, { method: 'POST' });
+        const response = await fetch('/setup/devices/' + deviceId + '/sync', { method: 'POST' });
         if (response.ok) {
             status.style.backgroundColor = '#dfd';
             status.textContent = '✅ Sync completed successfully!';
@@ -254,18 +278,6 @@ async function startSync() {
     }
 }
 
-async function fetchVersion() {
-    try {
-        const response = await fetch('/setup/version');
-        const data = await response.json();
-        const info = document.getElementById('version-info');
-        if (info && data.version) {
-            info.innerText = `AfterTouch ${data.version} (${data.commit}) - ${data.date}`;
-        }
-    } catch (error) {
-        console.error('Failed to fetch version info', error);
-    }
-}
 
 async function fetchInteractionStats() {
     console.log('Fetching interaction stats...');
@@ -605,7 +617,7 @@ async function fetchDeviceEvents(deviceId) {
     list.innerHTML = '<tr><td colspan="3" style="padding: 20px; text-align: center; color: #666;">Loading events...</td></tr>';
 
     try {
-        const response = await fetch(`/setup/devices/${deviceId}/events`);
+        const response = await fetch(`/devices/${deviceId}/events`);
         const data = await response.json();
         const events = data.events;
 
@@ -657,7 +669,7 @@ async function addManualDevice() {
     }
 
     try {
-        const response = await fetch('/setup/devices', {
+        const response = await fetch('/devices', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ip: ip })
@@ -681,7 +693,7 @@ async function removeDevice(deviceId, name) {
     }
 
     try {
-        const response = await fetch(`/setup/devices/${deviceId}`, {
+        const response = await fetch(`/devices/${deviceId}`, {
             method: 'DELETE'
         });
 
@@ -725,14 +737,23 @@ async function pollDiscoveryStatus() {
     }
 }
 
-async function updateDeviceInfo(ip) {
+async function updateDeviceInfo(deviceId) {
     try {
-        const response = await fetch('/setup/info/' + ip);
+        const response = await fetch('/devices/' + deviceId + '/info');
         if (!response.ok) return;
         const info = await response.json();
 
-        const rowId = 'device-row-' + ip.replace(/\./g, '-');
-        const row = document.getElementById(rowId);
+        // Find the row by deviceId
+        const rows = document.querySelectorAll('#device-list tr');
+        let row = null;
+        for (let r of rows) {
+            const deviceIdCol = r.querySelector('.col-deviceid');
+            if (deviceIdCol && deviceIdCol.innerText === deviceId) {
+                row = r;
+                break;
+            }
+        }
+
         if (row) {
             const nameEl = row.querySelector('.col-name');
             if (nameEl && info.name) nameEl.innerText = info.name;
@@ -753,12 +774,12 @@ async function updateDeviceInfo(ip) {
             if (accountIdEl && info.margeAccountUUID) accountIdEl.innerText = info.margeAccountUUID;
         }
     } catch (error) {
-        console.warn('Failed to fetch live info for ' + ip, error);
+        console.warn('Failed to fetch live info for ' + deviceId, error);
     }
 }
 
-async function showSummary(ip) {
-    if (!ip) {
+async function showSummary(deviceId) {
+    if (!deviceId) {
         document.getElementById('migration-summary').style.display = 'none';
         return;
     }
@@ -772,10 +793,11 @@ async function showSummary(ip) {
         bmx: document.getElementById('opt-bmx').value
     };
 
+    const deviceLabel = getDeviceLabel(deviceId);
     const statusDiv = document.getElementById('status');
     statusDiv.style.display = 'block';
     statusDiv.style.backgroundColor = '#ffffcc';
-    statusDiv.innerHTML = 'Fetching summary for ' + ip + '...';
+    statusDiv.innerHTML = 'Fetching summary for ' + deviceLabel + '...';
 
     let query = '?target_url=' + encodeURIComponent(targetUrl) + '&proxy_url=' + encodeURIComponent(proxyUrl);
     for (let k in opts) {
@@ -786,7 +808,7 @@ async function showSummary(ip) {
     if (outputBox) outputBox.style.display = 'none';
 
     try {
-        const response = await fetch('/setup/summary/' + ip + query);
+        const response = await fetch('/setup/devices/' + deviceId + '/summary' + query);
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(errorText);
@@ -794,11 +816,18 @@ async function showSummary(ip) {
         const summary = await response.json();
 
         statusDiv.style.display = 'none';
-        document.getElementById('summary-ip').innerText = ip;
+        document.getElementById('summary-ip').innerText = summary.device_id || deviceId;
 
-        // Update table row if it exists
-        const rowId = 'device-row-' + ip.replace(/\./g, '-');
-        const row = document.getElementById(rowId);
+        // Find the row by deviceId
+        const rows = document.querySelectorAll('#device-list tr');
+        let row = null;
+        for (let r of rows) {
+            const deviceIdCol = r.querySelector('.col-deviceid');
+            if (deviceIdCol && deviceIdCol.innerText === deviceId) {
+                row = r;
+                break;
+            }
+        }
         if (row) {
             const nameEl = row.querySelector('.col-name');
             if (nameEl && summary.device_name) nameEl.innerText = summary.device_name;
@@ -860,7 +889,7 @@ async function showSummary(ip) {
             caTrustStatus.innerText = summary.ca_cert_trusted ? '✅ Yes' : '❌ No';
             caTrustStatus.style.color = summary.ca_cert_trusted ? 'green' : 'red';
             document.getElementById('trust-ca-btn').style.display = summary.ca_cert_trusted ? 'none' : 'inline-block';
-            document.getElementById('trust-ca-btn').onclick = () => trustCA(ip);
+            document.getElementById('trust-ca-btn').onclick = () => trustCA(deviceId);
         } else {
             remoteStatus.innerText = '❓ Unknown';
             remoteStatus.style.color = 'gray';
@@ -890,51 +919,51 @@ async function showSummary(ip) {
         testResultDiv.style.display = 'none';
         testResultDiv.innerText = '';
 
-        document.getElementById('test-connection-explicit-btn').onclick = () => testConnection(ip, true);
-        document.getElementById('test-connection-trusted-btn').onclick = () => testConnection(ip, false);
-        document.getElementById('test-hosts-btn').onclick = () => testHostsRedirection(ip);
-        document.getElementById('test-dns-btn').onclick = () => testDNSRedirection(ip);
+        document.getElementById('test-connection-explicit-btn').onclick = () => testConnection(deviceId, true);
+        document.getElementById('test-connection-trusted-btn').onclick = () => testConnection(deviceId, false);
+        document.getElementById('test-hosts-btn').onclick = () => testHostsRedirection(deviceId);
+        document.getElementById('test-dns-btn').onclick = () => testDNSRedirection(deviceId);
 
         toggleMigrationMethod();
 
         const migrateBtn = document.getElementById('confirm-migrate-btn');
-        migrateBtn.onclick = () => migrate(ip);
+        migrateBtn.onclick = () => migrate(deviceId);
         migrateBtn.disabled = !summary.ssh_success;
 
         const revertBtn = document.getElementById('revert-migrate-btn');
-        revertBtn.onclick = () => revert(ip);
+        revertBtn.onclick = () => revert(deviceId);
         revertBtn.disabled = !summary.ssh_success;
         revertBtn.style.display = summary.original_config ? 'inline-block' : 'none';
 
         const rebootBtn = document.getElementById('reboot-speaker-btn');
-        rebootBtn.onclick = () => reboot(ip);
+        rebootBtn.onclick = () => reboot(deviceId);
         rebootBtn.disabled = !summary.ssh_success;
         rebootBtn.style.border = 'none'; // Reset border if it was set during migration
 
         const remoteBtn = document.getElementById('ensure-remote-btn');
-        remoteBtn.onclick = () => ensureRemoteServices(ip);
+        remoteBtn.onclick = () => ensureRemoteServices(deviceId);
         remoteBtn.disabled = !summary.ssh_success;
 
         const removeRemoteBtn = document.getElementById('remove-remote-btn');
-        removeRemoteBtn.onclick = () => removeRemoteServices(ip);
+        removeRemoteBtn.onclick = () => removeRemoteServices(deviceId);
         removeRemoteBtn.disabled = !summary.ssh_success || !summary.remote_services_enabled;
 
         const backupBtn = document.getElementById('backup-config-btn');
-        backupBtn.onclick = () => backupConfig(ip);
+        backupBtn.onclick = () => backupConfig(deviceId);
         backupBtn.disabled = !summary.ssh_success || !!summary.original_config;
 
         document.getElementById('migration-summary').style.display = 'block';
         document.getElementById('migration-summary').scrollIntoView();
     } catch (error) {
         statusDiv.style.backgroundColor = '#ffcccc';
-        statusDiv.innerHTML = 'Error fetching summary for ' + ip + ': ' + error;
+        statusDiv.innerHTML = 'Error fetching summary for ' + deviceId + ': ' + error;
     }
 }
 
 function refreshSummary() {
-    const ip = document.getElementById('summary-ip').innerText;
-    if (ip) {
-        showSummary(ip);
+    const deviceId = document.getElementById('summary-ip').innerText;
+    if (deviceId) {
+        showSummary(deviceId);
     }
 }
 
@@ -949,12 +978,13 @@ function showCommandOutput(result) {
     }
 }
 
-async function revert(ip) {
-    if (!ip) {
-        alert('Please enter a valid IP address.');
+async function revert(deviceId) {
+    if (!deviceId) {
+        alert('Please select a device.');
         return;
     }
-    if (!confirm('Are you sure you want to revert ' + ip + ' to Bose cloud defaults?')) {
+    const deviceLabel = getDeviceLabel(deviceId);
+    if (!confirm('Are you sure you want to revert ' + deviceLabel + ' to Bose cloud defaults?')) {
         return;
     }
 
@@ -964,61 +994,63 @@ async function revert(ip) {
     const statusDiv = document.getElementById('status');
     statusDiv.style.display = 'block';
     statusDiv.style.backgroundColor = '#ffffcc';
-    statusDiv.innerHTML = 'Reverting ' + ip + ' to defaults...';
+    statusDiv.innerHTML = 'Reverting ' + deviceLabel + ' to defaults...';
 
     try {
-        const response = await fetch('/setup/revert/' + ip, { method: 'POST' });
+        const response = await fetch('/setup/devices/' + deviceId + '/revert', { method: 'POST' });
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
             statusDiv.style.backgroundColor = '#ccffcc';
-            statusDiv.innerHTML = 'Successfully started revert for ' + ip + '.';
+            statusDiv.innerHTML = 'Successfully started revert for ' + deviceLabel + '.';
         } else {
             statusDiv.style.backgroundColor = '#ffcccc';
-            statusDiv.innerHTML = 'Revert failed for ' + ip + ': ' + (result.message || 'Unknown error');
+            statusDiv.innerHTML = 'Revert failed for ' + deviceLabel + ': ' + (result.message || 'Unknown error');
         }
     } catch (error) {
         statusDiv.style.backgroundColor = '#ffcccc';
-        statusDiv.innerHTML = 'Error reverting ' + ip + ': ' + error;
+        statusDiv.innerHTML = 'Error reverting ' + deviceLabel + ': ' + error;
     }
 }
 
-async function reboot(ip) {
-    if (!ip) {
-        alert('Please enter a valid IP address.');
+async function reboot(deviceId) {
+    if (!deviceId) {
+        alert('Please select a device.');
         return;
     }
-    if (!confirm('Are you sure you want to reboot the speaker at ' + ip + '?')) {
+    const deviceLabel = getDeviceLabel(deviceId);
+    if (!confirm('Are you sure you want to reboot the speaker ' + deviceLabel + '?')) {
         return;
     }
 
     const statusDiv = document.getElementById('status');
     statusDiv.style.display = 'block';
     statusDiv.style.backgroundColor = '#ffffcc';
-    statusDiv.innerHTML = 'Rebooting ' + ip + '...';
+    statusDiv.innerHTML = 'Rebooting ' + deviceLabel + '...';
 
     try {
-        const response = await fetch('/setup/reboot/' + ip, { method: 'POST' });
+        const response = await fetch('/devices/' + deviceId + '/reboot', { method: 'POST' });
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
             statusDiv.style.backgroundColor = '#ccffcc';
-            statusDiv.innerHTML = 'Successfully started reboot for ' + ip + '.';
+            statusDiv.innerHTML = 'Successfully started reboot for ' + deviceLabel + '.';
         } else {
             statusDiv.style.backgroundColor = '#ffcccc';
-            statusDiv.innerHTML = 'Reboot failed for ' + ip + ': ' + (result.message || 'Unknown error');
+            statusDiv.innerHTML = 'Reboot failed for ' + deviceLabel + ': ' + (result.message || 'Unknown error');
         }
     } catch (error) {
         statusDiv.style.backgroundColor = '#ffcccc';
-        statusDiv.innerHTML = 'Error rebooting ' + ip + ': ' + error;
+        statusDiv.innerHTML = 'Error rebooting ' + deviceLabel + ': ' + error;
     }
 }
 
-async function migrate(ip) {
-    if (!ip) {
-        alert('Please enter a valid IP address.');
+async function migrate(deviceId) {
+    if (!deviceId) {
+        alert('Please select a device.');
         return;
     }
+    const deviceLabel = getDeviceLabel(deviceId);
     const targetUrl = document.getElementById('target-domain').value;
     const proxyUrl = document.getElementById('soundcork-url').value;
     const method = document.getElementById('migration-method').value;
@@ -1036,7 +1068,7 @@ async function migrate(ip) {
     const statusDiv = document.getElementById('status');
     statusDiv.style.display = 'block';
     statusDiv.style.backgroundColor = '#ffffcc';
-    statusDiv.innerHTML = 'Migrating ' + ip + ' using ' + method + '...';
+    statusDiv.innerHTML = 'Migrating ' + deviceLabel + ' using ' + method + '...';
 
     let query = '?method=' + encodeURIComponent(method) + '&target_url=' + encodeURIComponent(targetUrl) + '&proxy_url=' + encodeURIComponent(proxyUrl);
     for (let k in opts) {
@@ -1044,62 +1076,99 @@ async function migrate(ip) {
     }
 
     try {
-        const response = await fetch('/setup/migrate/' + ip + query, { method: 'POST' });
+        const response = await fetch('/setup/devices/' + deviceId + '/migrate' + query, { method: 'POST' });
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
             statusDiv.style.backgroundColor = '#ccffcc';
-            statusDiv.innerHTML = 'Successfully started migration for ' + ip + '. <strong>Please reboot the device to activate the changes.</strong>';
+            statusDiv.innerHTML = 'Successfully started migration for ' + deviceLabel + '. <strong>Please reboot the device to activate the changes.</strong>';
 
             // Make reboot button available and prominent
             const rebootBtn = document.getElementById('reboot-speaker-btn');
             rebootBtn.style.display = 'inline-block';
             rebootBtn.disabled = false;
             rebootBtn.style.border = '2px solid #000';
+            rebootBtn.onclick = () => reboot(deviceId);
 
             // Re-show summary but with prominence on reboot
             summaryDiv.style.display = 'block';
         } else {
             statusDiv.style.backgroundColor = '#ffcccc';
-            statusDiv.innerHTML = 'Migration failed for ' + ip + ': ' + (result.message || 'Unknown error');
+            statusDiv.innerHTML = 'Migration failed for ' + deviceLabel + ': ' + (result.message || 'Unknown error');
         }
     } catch (error) {
         statusDiv.style.backgroundColor = '#ffcccc';
-        statusDiv.innerHTML = 'Error migrating ' + ip + ': ' + error;
+        statusDiv.innerHTML = 'Error migrating ' + deviceLabel + ': ' + error;
     }
 }
 
-async function trustCA(ip) {
-    if (!ip) {
-        alert('Please enter a valid IP address.');
+async function trustCA(deviceId) {
+    if (!deviceId) {
+        alert('Please select a device.');
         return;
     }
+    const deviceLabel = getDeviceLabel(deviceId);
     const statusDiv = document.getElementById('status');
     statusDiv.style.display = 'block';
     statusDiv.style.backgroundColor = '#ffffcc';
-    statusDiv.innerHTML = 'Injecting Root CA into shared trust store on ' + ip + '...';
+    statusDiv.innerHTML = 'Injecting Root CA into shared trust store on ' + deviceLabel + '...';
 
     try {
-        const response = await fetch('/setup/trust-ca/' + ip, { method: 'POST' });
+        const response = await fetch('/setup/devices/' + deviceId + '/trust-ca', { method: 'POST' });
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
             statusDiv.style.backgroundColor = '#ccffcc';
-            statusDiv.innerHTML = 'Successfully injected Root CA on ' + ip + '.';
-            showSummary(ip); // Refresh to update status
+            statusDiv.innerHTML = 'Successfully injected Root CA on ' + deviceLabel + '.';
+            showSummary(deviceId); // Refresh to update status
         } else {
             statusDiv.style.backgroundColor = '#ffcccc';
-            statusDiv.innerHTML = 'Failed to trust CA on ' + ip + ': ' + (result.message || 'Unknown error');
+            statusDiv.innerHTML = 'Failed to trust CA on ' + deviceLabel + ': ' + (result.message || 'Unknown error');
         }
     } catch (error) {
         statusDiv.style.backgroundColor = '#ffcccc';
-        statusDiv.innerHTML = 'Error trusting CA on ' + ip + ': ' + error;
+        statusDiv.innerHTML = 'Error trusting CA on ' + deviceLabel + ': ' + error;
     }
 }
 
-async function ensureRemoteServices(ip) {
-    if (!ip) {
-        alert('Please enter a valid IP address.');
+async function ensureRemoteServices(deviceId) {
+    if (!deviceId) {
+        alert('Please select a device.');
+        return;
+    }
+    const deviceLabel = getDeviceLabel(deviceId);
+    const summaryDiv = document.getElementById('migration-summary');
+    summaryDiv.style.display = 'none';
+
+    const statusDiv = document.getElementById('status');
+    statusDiv.style.display = 'block';
+    statusDiv.style.backgroundColor = '#ffffcc';
+    statusDiv.innerHTML = 'Ensuring remote services for ' + deviceLabel + '...';
+
+    try {
+        const response = await fetch('/setup/devices/' + deviceId + '/ensure-remote-services', { method: 'POST' });
+        const result = await response.json();
+        showCommandOutput(result);
+        if (result.ok) {
+            statusDiv.style.backgroundColor = '#ccffcc';
+            statusDiv.innerHTML = 'Successfully ensured remote services for ' + deviceLabel + '.';
+        } else {
+            statusDiv.style.backgroundColor = '#ffcccc';
+            statusDiv.innerHTML = 'Failed to ensure remote services for ' + deviceLabel + ': ' + (result.message || 'Unknown error');
+        }
+    } catch (error) {
+        statusDiv.style.backgroundColor = '#ffcccc';
+        statusDiv.innerHTML = 'Error ensuring remote services for ' + deviceLabel + ': ' + error;
+    }
+}
+
+async function removeRemoteServices(deviceId) {
+    if (!deviceId) {
+        alert('Please select a device.');
+        return;
+    }
+    const deviceLabel = getDeviceLabel(deviceId);
+    if (!confirm('Are you sure you want to remove remote services from ' + deviceLabel + '?')) {
         return;
     }
     const summaryDiv = document.getElementById('migration-summary');
@@ -1108,98 +1177,68 @@ async function ensureRemoteServices(ip) {
     const statusDiv = document.getElementById('status');
     statusDiv.style.display = 'block';
     statusDiv.style.backgroundColor = '#ffffcc';
-    statusDiv.innerHTML = 'Ensuring remote services for ' + ip + '...';
+    statusDiv.innerHTML = 'Removing remote services for ' + deviceLabel + '...';
 
     try {
-        const response = await fetch('/setup/ensure-remote-services/' + ip, { method: 'POST' });
+        const response = await fetch('/setup/devices/' + deviceId + '/remove-remote-services', { method: 'POST' });
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
             statusDiv.style.backgroundColor = '#ccffcc';
-            statusDiv.innerHTML = 'Successfully ensured remote services for ' + ip + '.';
+            statusDiv.innerHTML = 'Successfully removed remote services from ' + deviceLabel + '.';
         } else {
             statusDiv.style.backgroundColor = '#ffcccc';
-            statusDiv.innerHTML = 'Failed to ensure remote services for ' + ip + ': ' + (result.message || 'Unknown error');
+            statusDiv.innerHTML = 'Failed to remove remote services for ' + deviceLabel + ': ' + (result.message || 'Unknown error');
         }
     } catch (error) {
         statusDiv.style.backgroundColor = '#ffcccc';
-        statusDiv.innerHTML = 'Error ensuring remote services for ' + ip + ': ' + error;
+        statusDiv.innerHTML = 'Error removing remote services for ' + deviceLabel + ': ' + error;
     }
 }
 
-async function removeRemoteServices(ip) {
-    if (!ip) {
-        alert('Please enter a valid IP address.');
+async function backupConfig(deviceId) {
+    if (!deviceId) {
+        alert('Please select a device.');
         return;
     }
-    if (!confirm('Are you sure you want to remove remote services from ' + ip + '?')) {
-        return;
-    }
-    const summaryDiv = document.getElementById('migration-summary');
-    summaryDiv.style.display = 'none';
-
+    const deviceLabel = getDeviceLabel(deviceId);
     const statusDiv = document.getElementById('status');
     statusDiv.style.display = 'block';
     statusDiv.style.backgroundColor = '#ffffcc';
-    statusDiv.innerHTML = 'Removing remote services for ' + ip + '...';
+    statusDiv.innerHTML = 'Creating backup for ' + deviceLabel + '...';
 
     try {
-        const response = await fetch('/setup/remove-remote-services/' + ip, { method: 'POST' });
+        const response = await fetch('/setup/devices/' + deviceId + '/backup', { method: 'POST' });
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
             statusDiv.style.backgroundColor = '#ccffcc';
-            statusDiv.innerHTML = 'Successfully removed remote services from ' + ip + '.';
+            statusDiv.innerHTML = 'Successfully created backup for ' + deviceLabel + '.';
+            showSummary(deviceId); // Refresh
         } else {
             statusDiv.style.backgroundColor = '#ffcccc';
-            statusDiv.innerHTML = 'Failed to remove remote services for ' + ip + ': ' + (result.message || 'Unknown error');
+            statusDiv.innerHTML = 'Failed to create backup for ' + deviceLabel + ': ' + (result.message || 'Unknown error');
         }
     } catch (error) {
         statusDiv.style.backgroundColor = '#ffcccc';
-        statusDiv.innerHTML = 'Error removing remote services for ' + ip + ': ' + error;
+        statusDiv.innerHTML = 'Error creating backup for ' + deviceLabel + ': ' + error;
     }
 }
 
-async function backupConfig(ip) {
-    if (!ip) {
-        alert('Please enter a valid IP address.');
-        return;
-    }
-    const statusDiv = document.getElementById('status');
-    statusDiv.style.display = 'block';
-    statusDiv.style.backgroundColor = '#ffffcc';
-    statusDiv.innerHTML = 'Creating backup for ' + ip + '...';
-
-    try {
-        const response = await fetch('/setup/backup/' + ip, { method: 'POST' });
-        const result = await response.json();
-        showCommandOutput(result);
-        if (result.ok) {
-            statusDiv.style.backgroundColor = '#ccffcc';
-            statusDiv.innerHTML = 'Successfully created backup for ' + ip + '.';
-            showSummary(ip); // Refresh
-        } else {
-            statusDiv.style.backgroundColor = '#ffcccc';
-            statusDiv.innerHTML = 'Backup failed for ' + ip + ': ' + (result.message || 'Unknown error');
-        }
-    } catch (error) {
-        statusDiv.style.backgroundColor = '#ffcccc';
-        statusDiv.innerHTML = 'Error creating backup for ' + ip + ': ' + error;
-    }
-}
-
-async function testConnection(ip, useExplicitCA) {
+async function testConnection(deviceId, useExplicitCA) {
     const testUrl = document.getElementById('test-url').innerText;
     const testResultDiv = document.getElementById('test-result');
+
+    const deviceLabel = getDeviceLabel(deviceId);
 
     testResultDiv.style.display = 'block';
     testResultDiv.style.backgroundColor = '#f0f0f0';
     testResultDiv.style.color = 'black';
-    testResultDiv.innerText = 'Running connection test from ' + ip + '...\n(This may take a few seconds)';
+    testResultDiv.innerText = 'Running connection test from ' + deviceLabel + '...\n(This may take a few seconds)';
 
     try {
         const query = `?target_url=${encodeURIComponent(testUrl)}&use_explicit_ca=${useExplicitCA}`;
-        const response = await fetch(`/setup/test-connection/${ip}${query}`, { method: 'POST' });
+        const response = await fetch(`/setup/devices/${deviceId}/test-connection${query}`, { method: 'POST' });
         const result = await response.json();
 
         if (result.ok) {
@@ -1215,18 +1254,20 @@ async function testConnection(ip, useExplicitCA) {
     }
 }
 
-async function testHostsRedirection(ip) {
+async function testHostsRedirection(deviceId) {
     const targetUrl = document.getElementById('target-domain').value;
     const testResultDiv = document.getElementById('hosts-test-result');
+
+    const deviceLabel = getDeviceLabel(deviceId);
 
     testResultDiv.style.display = 'block';
     testResultDiv.style.backgroundColor = '#f0f0f0';
     testResultDiv.style.color = 'black';
-    testResultDiv.innerText = 'Running hosts redirection test from ' + ip + '...\n(This may take a few seconds)';
+    testResultDiv.innerText = 'Running hosts redirection test from ' + deviceLabel + '...\n(This may take a few seconds)';
 
     try {
         const query = `?target_url=${encodeURIComponent(targetUrl)}`;
-        const response = await fetch(`/setup/test-hosts/${ip}${query}`, { method: 'POST' });
+        const response = await fetch(`/setup/devices/${deviceId}/test-hosts${query}`, { method: 'POST' });
         const result = await response.json();
 
         if (result.ok) {
@@ -1242,18 +1283,20 @@ async function testHostsRedirection(ip) {
     }
 }
 
-async function testDNSRedirection(ip) {
+async function testDNSRedirection(deviceId) {
     const targetUrl = document.getElementById('target-domain').value;
     const testResultDiv = document.getElementById('dns-test-result');
+
+    const deviceLabel = getDeviceLabel(deviceId);
 
     testResultDiv.style.display = 'block';
     testResultDiv.style.backgroundColor = '#f0f0f0';
     testResultDiv.style.color = 'black';
-    testResultDiv.innerText = 'Running DNS redirection test from ' + ip + '...\n(This may take a few seconds)';
+    testResultDiv.innerText = 'Running DNS redirection test from ' + deviceLabel + '...\n(This may take a few seconds)';
 
     try {
         const query = `?target_url=${encodeURIComponent(targetUrl)}`;
-        const response = await fetch(`/setup/test-dns/${ip}${query}`, { method: 'POST' });
+        const response = await fetch(`/setup/devices/${deviceId}/test-dns${query}`, { method: 'POST' });
         const result = await response.json();
 
         if (result.ok) {

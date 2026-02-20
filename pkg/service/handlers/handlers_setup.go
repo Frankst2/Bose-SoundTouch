@@ -278,33 +278,17 @@ func (s *Server) HandleUpdateSettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleGetDeviceInfo returns live information for a device.
-func (s *Server) HandleGetDeviceInfo(w http.ResponseWriter, r *http.Request) {
-	deviceIP := chi.URLParam(r, "deviceIP")
-	if deviceIP == "" {
-		http.Error(w, "Device IP is required", http.StatusBadRequest)
-		return
-	}
-
-	info, err := s.sm.GetLiveDeviceInfo(deviceIP)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(info); err != nil {
-		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
-		return
-	}
-}
-
 // HandleGetMigrationSummary returns a summary of the migration plan for a device.
 func (s *Server) HandleGetMigrationSummary(w http.ResponseWriter, r *http.Request) {
-	deviceIP := chi.URLParam(r, "deviceIP")
-	if deviceIP == "" {
-		http.Error(w, "Device IP is required", http.StatusBadRequest)
+	deviceID := chi.URLParam(r, "deviceId")
+	if deviceID == "" {
+		http.Error(w, "Device ID is required", http.StatusBadRequest)
+		return
+	}
+
+	deviceIP, err := s.lookupIP(deviceID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -335,16 +319,22 @@ func (s *Server) HandleGetMigrationSummary(w http.ResponseWriter, r *http.Reques
 
 // HandleMigrateDevice starts the migration process for a device.
 func (s *Server) HandleMigrateDevice(w http.ResponseWriter, r *http.Request) {
-	deviceIP := chi.URLParam(r, "deviceIP")
-	if deviceIP == "" {
+	deviceID := chi.URLParam(r, "deviceId")
+	if deviceID == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 
-		if err := json.NewEncoder(w).Encode(map[string]interface{}{"ok": false, "message": "Device IP is required"}); err != nil {
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{"ok": false, "message": "Device ID is required"}); err != nil {
 			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			return
 		}
 
+		return
+	}
+
+	deviceIP, err := s.lookupIP(deviceID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -383,16 +373,22 @@ func (s *Server) HandleMigrateDevice(w http.ResponseWriter, r *http.Request) {
 
 // HandleRevertMigration reverts the migration for a device.
 func (s *Server) HandleRevertMigration(w http.ResponseWriter, r *http.Request) {
-	deviceIP := chi.URLParam(r, "deviceIP")
-	if deviceIP == "" {
+	deviceID := chi.URLParam(r, "deviceId")
+	if deviceID == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 
-		if err := json.NewEncoder(w).Encode(map[string]interface{}{"ok": false, "message": "Device IP is required"}); err != nil {
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{"ok": false, "message": "Device ID is required"}); err != nil {
 			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			return
 		}
 
+		return
+	}
+
+	deviceIP, err := s.lookupIP(deviceID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -498,16 +494,22 @@ func (s *Server) HandleClearDNSDiscoveries(w http.ResponseWriter, _ *http.Reques
 
 // HandleTrustCACert injects the local Root CA into the device's shared trust store.
 func (s *Server) HandleTrustCACert(w http.ResponseWriter, r *http.Request) {
-	deviceIP := chi.URLParam(r, "deviceIP")
-	if deviceIP == "" {
+	deviceID := chi.URLParam(r, "deviceId")
+	if deviceID == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 
-		if err := json.NewEncoder(w).Encode(map[string]interface{}{"ok": false, "message": "Device IP is required"}); err != nil {
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{"ok": false, "message": "Device ID is required"}); err != nil {
 			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			return
 		}
 
+		return
+	}
+
+	deviceIP, err := s.lookupIP(deviceID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -534,16 +536,22 @@ func (s *Server) HandleTrustCACert(w http.ResponseWriter, r *http.Request) {
 
 // HandleEnsureRemoteServices ensures that remote services are configured on a device.
 func (s *Server) HandleEnsureRemoteServices(w http.ResponseWriter, r *http.Request) {
-	deviceIP := chi.URLParam(r, "deviceIP")
-	if deviceIP == "" {
+	deviceID := chi.URLParam(r, "deviceId")
+	if deviceID == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 
-		if err := json.NewEncoder(w).Encode(map[string]interface{}{"ok": false, "message": "Device IP is required"}); err != nil {
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{"ok": false, "message": "Device ID is required"}); err != nil {
 			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			return
 		}
 
+		return
+	}
+
+	deviceIP, err := s.lookupIP(deviceID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -570,16 +578,22 @@ func (s *Server) HandleEnsureRemoteServices(w http.ResponseWriter, r *http.Reque
 
 // HandleRemoveRemoteServices removes remote services configuration from a device.
 func (s *Server) HandleRemoveRemoteServices(w http.ResponseWriter, r *http.Request) {
-	deviceIP := chi.URLParam(r, "deviceIP")
-	if deviceIP == "" {
+	deviceID := chi.URLParam(r, "deviceId")
+	if deviceID == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 
-		if err := json.NewEncoder(w).Encode(map[string]interface{}{"ok": false, "message": "Device IP is required"}); err != nil {
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{"ok": false, "message": "Device ID is required"}); err != nil {
 			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			return
 		}
 
+		return
+	}
+
+	deviceIP, err := s.lookupIP(deviceID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -606,16 +620,22 @@ func (s *Server) HandleRemoveRemoteServices(w http.ResponseWriter, r *http.Reque
 
 // HandleBackupConfig creates a backup of the device configuration.
 func (s *Server) HandleBackupConfig(w http.ResponseWriter, r *http.Request) {
-	deviceIP := chi.URLParam(r, "deviceIP")
-	if deviceIP == "" {
+	deviceID := chi.URLParam(r, "deviceId")
+	if deviceID == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 
-		if err := json.NewEncoder(w).Encode(map[string]interface{}{"ok": false, "message": "Device IP is required"}); err != nil {
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{"ok": false, "message": "Device ID is required"}); err != nil {
 			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			return
 		}
 
+		return
+	}
+
+	deviceIP, err := s.lookupIP(deviceID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -731,9 +751,15 @@ func (s *Server) HandleUpdateProxySettings(w http.ResponseWriter, r *http.Reques
 
 // HandleTestHostsRedirection performs a preliminary check for /etc/hosts redirection.
 func (s *Server) HandleTestHostsRedirection(w http.ResponseWriter, r *http.Request) {
-	deviceIP := chi.URLParam(r, "deviceIP")
-	if deviceIP == "" {
-		http.Error(w, "Device IP is required", http.StatusBadRequest)
+	deviceID := chi.URLParam(r, "deviceId")
+	if deviceID == "" {
+		http.Error(w, "Device ID is required", http.StatusBadRequest)
+		return
+	}
+
+	deviceIP, err := s.lookupIP(deviceID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -771,9 +797,15 @@ func (s *Server) HandleTestHostsRedirection(w http.ResponseWriter, r *http.Reque
 
 // HandleTestDNSRedirection performs a check for DNS redirection to the AfterTouch service.
 func (s *Server) HandleTestDNSRedirection(w http.ResponseWriter, r *http.Request) {
-	deviceIP := chi.URLParam(r, "deviceIP")
-	if deviceIP == "" {
-		http.Error(w, "Device IP is required", http.StatusBadRequest)
+	deviceID := chi.URLParam(r, "deviceId")
+	if deviceID == "" {
+		http.Error(w, "Device ID is required", http.StatusBadRequest)
+		return
+	}
+
+	deviceIP, err := s.lookupIP(deviceID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -811,9 +843,15 @@ func (s *Server) HandleTestDNSRedirection(w http.ResponseWriter, r *http.Request
 
 // HandleInitialSync fetches presets, recents and sources from the device and saves them to the datastore.
 func (s *Server) HandleInitialSync(w http.ResponseWriter, r *http.Request) {
-	deviceIP := chi.URLParam(r, "deviceIP")
-	if deviceIP == "" {
-		http.Error(w, "Missing deviceIP", http.StatusBadRequest)
+	deviceID := chi.URLParam(r, "deviceId")
+	if deviceID == "" {
+		http.Error(w, "Device ID is required", http.StatusBadRequest)
+		return
+	}
+
+	deviceIP, err := s.lookupIP(deviceID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -828,16 +866,22 @@ func (s *Server) HandleInitialSync(w http.ResponseWriter, r *http.Request) {
 
 // HandleRebootDevice reboots a device.
 func (s *Server) HandleRebootDevice(w http.ResponseWriter, r *http.Request) {
-	deviceIP := chi.URLParam(r, "deviceIP")
-	if deviceIP == "" {
+	deviceID := chi.URLParam(r, "deviceId")
+	if deviceID == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 
-		if err := json.NewEncoder(w).Encode(map[string]interface{}{"ok": false, "message": "Device IP is required"}); err != nil {
+		if err := json.NewEncoder(w).Encode(map[string]interface{}{"ok": false, "message": "Device ID is required"}); err != nil {
 			http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 			return
 		}
 
+		return
+	}
+
+	deviceIP, err := s.lookupIP(deviceID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -864,9 +908,15 @@ func (s *Server) HandleRebootDevice(w http.ResponseWriter, r *http.Request) {
 
 // HandleTestConnection performs a connection check from the device to the server.
 func (s *Server) HandleTestConnection(w http.ResponseWriter, r *http.Request) {
-	deviceIP := chi.URLParam(r, "deviceIP")
-	if deviceIP == "" {
-		http.Error(w, "Device IP is required", http.StatusBadRequest)
+	deviceID := chi.URLParam(r, "deviceId")
+	if deviceID == "" {
+		http.Error(w, "Device ID is required", http.StatusBadRequest)
+		return
+	}
+
+	deviceIP, err := s.lookupIP(deviceID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 

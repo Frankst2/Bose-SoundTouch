@@ -119,7 +119,7 @@ soundtouch-service
 ```go
 // Build custom applications on top of local services
 client := &http.Client{}
-resp, _ := client.Get("http://localhost:8000/setup/devices")
+resp, _ := client.Get("http://localhost:8000/devices")
 ```
 
 ### Privacy-Conscious Users
