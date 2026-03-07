@@ -139,6 +139,10 @@ type DeviceInfoXML struct {
 	} `xml:"networkInfo" json:"networkInfo"`
 	SoftwareVer  string `xml:"-" json:"softwareVersion"`
 	SerialNumber string `xml:"-" json:"serialNumber"`
+
+	// Enriched fields (not part of device /info XML)
+	NowPlaying *models.NowPlaying `json:"nowPlaying,omitempty"`
+	Volume     *models.Volume     `json:"volume,omitempty"`
 }
 
 // GetLiveDeviceInfo fetches live information from the speaker's :8090/info endpoint.
@@ -185,6 +189,16 @@ func (m *Manager) parseDeviceInfoXML(reader io.Reader, infoXML *DeviceInfoXML) e
 			}
 		}
 	}
+
+	// Enrich with live now playing and volume via device API (best-effort)
+	//c := client.NewClientFromHost(deviceIP)
+	//if vol, err := c.GetVolume(); err == nil {
+	//    infoXML.Volume = vol
+	//}
+	//
+	//if np, err := c.GetNowPlaying(); err == nil {
+	//    infoXML.NowPlaying = np
+	//}
 
 	return nil
 }

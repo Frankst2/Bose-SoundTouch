@@ -18,7 +18,7 @@ func TestEventLog(t *testing.T) {
 
 	r := chi.NewRouter()
 	r.Post("/streaming/stats/usage", s.HandleUsageStats)
-	r.Get("/setup/devices/{deviceId}/events", s.HandleGetDeviceEvents)
+	r.Get("/devices/{deviceId}/events", s.HandleGetDeviceEvents)
 
 	t.Run("Record and Retrieve Events", func(t *testing.T) {
 		// 1. Post a usage stat
@@ -36,7 +36,7 @@ func TestEventLog(t *testing.T) {
 		}
 
 		// 2. Retrieve events
-		req, _ = http.NewRequest("GET", "/setup/devices/SPEAKER1/events", nil)
+		req, _ = http.NewRequest("GET", "/devices/SPEAKER1/events", nil)
 		w = httptest.NewRecorder()
 		r.ServeHTTP(w, req)
 

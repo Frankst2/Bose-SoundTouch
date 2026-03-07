@@ -91,12 +91,31 @@ func setupRouter(targetURL string, ds *datastore.DataStore) (*chi.Mux, *Server) 
 		r.Post("/account/{account}/password", server.HandleMargeChangePassword)
 	})
 
+	// Setup Devices for tests
+	r.Route("/devices", func(r chi.Router) {
+		r.Get("/", server.HandleListDiscoveredDevices)
+		r.Post("/", server.HandleAddManualDevice)
+
+		r.Route("/{deviceId}", func(r chi.Router) {
+			r.Delete("/", server.HandleRemoveDevice)
+			r.Get("/events", server.HandleGetDeviceEvents)
+			r.Get("/info", server.HandleGetDeviceInfo)
+			r.Get("/ws", server.HandleDeviceWebSocket)
+			r.Post("/key/{key}", server.HandleDeviceKey)
+			r.Post("/volume/{level}", server.HandleDeviceVolume)
+			r.Post("/reboot", server.HandleRebootDevice)
+		})
+	})
+
+	r.Get("/version", server.HandleGetVersionInfo)
+
 	// Setup Setup for tests
 	r.Route("/setup", func(r chi.Router) {
-		r.Get("/devices", server.HandleListDiscoveredDevices)
-		r.Delete("/devices/{deviceId}", server.HandleRemoveDevice)
+		r.Post("/discover", server.HandleTriggerDiscovery)
+		r.Get("/discovery-status", server.HandleGetDiscoveryStatus)
 		r.Get("/settings", server.HandleGetSettings)
 		r.Post("/settings", server.HandleUpdateSettings)
+		r.Get("/ca.crt", server.HandleGetCACert)
 		r.Get("/proxy-settings", server.HandleGetProxySettings)
 		r.Post("/proxy-settings", server.HandleUpdateProxySettings)
 		r.Post("/ensure-remote-services/{deviceId}", server.HandleEnsureRemoteServices)
@@ -108,6 +127,30 @@ func setupRouter(targetURL string, ds *datastore.DataStore) (*chi.Mux, *Server) 
 		r.Post("/test-connection/{deviceId}", server.HandleTestConnection)
 		r.Post("/test-hosts/{deviceId}", server.HandleTestHostsRedirection)
 		r.Get("/ca.crt", server.HandleGetCACert)
+
+		r.Get("/interaction-stats", server.HandleGetInteractionStats)
+		r.Get("/interactions", server.HandleListInteractions)
+		r.Get("/interaction-content", server.HandleGetInteractionContent)
+		r.Get("/interactions/sessions/{session}/download", server.HandleDownloadSession)
+		r.Delete("/interactions/sessions/{session}", server.HandleDeleteSession)
+		r.Delete("/interactions/sessions", server.HandleCleanupSessions)
+
+		r.Get("/dns-discoveries", server.HandleGetDNSDiscoveries)
+		r.Delete("/dns-discoveries", server.HandleClearDNSDiscoveries)
+
+		r.Route("/devices/{deviceId}", func(r chi.Router) {
+			r.Get("/summary", server.HandleGetMigrationSummary)
+			r.Post("/migrate", server.HandleMigrateDevice)
+			r.Post("/revert", server.HandleRevertMigration)
+			r.Post("/trust-ca", server.HandleTrustCACert)
+			r.Post("/ensure-remote-services", server.HandleEnsureRemoteServices)
+			r.Post("/remove-remote-services", server.HandleRemoveRemoteServices)
+			r.Post("/backup", server.HandleBackupConfig)
+			r.Post("/sync", server.HandleInitialSync)
+			r.Post("/test-connection", server.HandleTestConnection)
+			r.Post("/test-hosts", server.HandleTestHostsRedirection)
+			r.Post("/test-dns", server.HandleTestDNSRedirection)
+		})
 	})
 
 	r.NotFound(server.HandleNotFound)

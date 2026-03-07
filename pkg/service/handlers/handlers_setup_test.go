@@ -232,8 +232,8 @@ func TestMigrationAndCA(t *testing.T) {
 		t.Errorf("CA: Unexpected content type: %s", res.Header.Get("Content-Type"))
 	}
 
-	// 2. Test POST /setup/migrate/{deviceIP}?method=hosts
-	res, err = http.Post(ts.URL+"/setup/migrate/192.168.1.10?method=hosts&target_url=http://192.168.1.100:8000", "application/json", nil)
+	// 2. Test POST /setup/devices/{deviceIP}/migrate?method=hosts
+	res, err = http.Post(ts.URL+"/setup/devices/192.168.1.10/migrate?method=hosts&target_url=http://192.168.1.100:8000", "application/json", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -254,8 +254,8 @@ func TestMigrationAndCA(t *testing.T) {
 		t.Errorf("Migrate: Expected output field in response")
 	}
 
-	// 3. Test POST /setup/trust-ca/{deviceIP}
-	res, err = http.Post(ts.URL+"/setup/trust-ca/192.168.1.10", "application/json", nil)
+	// 3. Test POST /setup/devices/{deviceIP}/trust-ca
+	res, err = http.Post(ts.URL+"/setup/devices/192.168.1.10/trust-ca", "application/json", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -275,8 +275,8 @@ func TestMigrationAndCA(t *testing.T) {
 		t.Errorf("TrustCA: Expected output field in response")
 	}
 
-	// 4. Test POST /setup/reboot/{deviceIP}
-	res, err = http.Post(ts.URL+"/setup/reboot/192.168.1.10", "application/json", nil)
+	// 4. Test POST /devices/{deviceIP}/reboot
+	res, err = http.Post(ts.URL+"/devices/192.168.1.10/reboot", "application/json", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -296,8 +296,8 @@ func TestMigrationAndCA(t *testing.T) {
 		t.Errorf("Reboot: Expected output field in response")
 	}
 
-	// 5. Test POST /setup/remove-remote-services/{deviceIP}
-	res, err = http.Post(ts.URL+"/setup/remove-remote-services/192.168.1.10", "application/json", nil)
+	// 5. Test POST /setup/devices/{deviceIP}/remove-remote-services
+	res, err = http.Post(ts.URL+"/setup/devices/192.168.1.10/remove-remote-services", "application/json", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -329,17 +329,20 @@ func TestRemoveDevice(t *testing.T) {
 	_ = ds.Initialize()
 
 	// Setup a dummy device in the datastore
-	account := "test-account"
+	account := "acc1"
 	deviceID := "TEST-DEVICE-ID"
-	deviceDir := filepath.Join(tempDir, "accounts", account, "devices", deviceID)
-	if err := os.MkdirAll(deviceDir, 0755); err != nil {
-		t.Fatalf("Failed to create device dir: %v", err)
-	}
 
-	infoFile := filepath.Join(deviceDir, "DeviceInfo.xml")
-	infoXML := `<?xml version="1.0" encoding="UTF-8" ?><info deviceID="TEST-DEVICE-ID"><name>Test Device</name><type>SoundTouch 10</type></info>`
-	if err := os.WriteFile(infoFile, []byte(infoXML), 0644); err != nil {
-		t.Fatalf("Failed to create device info file: %v", err)
+	// Register device in datastore so HandleRemoveDevice works
+	_ = ds.SaveDeviceInfo(account, deviceID, &models.ServiceDeviceInfo{
+		DeviceID:  deviceID,
+		AccountID: account,
+		IPAddress: "192.168.1.100",
+	})
+
+	// Verify directory exists where datastore expects it
+	deviceDir := filepath.Join(tempDir, "accounts", account, "devices", deviceID)
+	if _, err := os.Stat(deviceDir); err != nil {
+		t.Fatalf("Device directory was not created by SaveDeviceInfo: %v", err)
 	}
 
 	r, _ := setupRouter("http://localhost:8001", ds)
@@ -347,7 +350,7 @@ func TestRemoveDevice(t *testing.T) {
 	defer ts.Close()
 
 	// 1. Verify device exists
-	res, err := http.Get(ts.URL + "/setup/devices")
+	res, err := http.Get(ts.URL + "/devices")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -370,7 +373,7 @@ func TestRemoveDevice(t *testing.T) {
 	}
 
 	// 2. Remove device
-	req, err := http.NewRequest(http.MethodDelete, ts.URL+"/setup/devices/"+deviceID, nil)
+	req, err := http.NewRequest(http.MethodDelete, ts.URL+"/devices/"+deviceID, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -385,7 +388,7 @@ func TestRemoveDevice(t *testing.T) {
 	}
 
 	// 3. Verify device is gone
-	res, err = http.Get(ts.URL + "/setup/devices")
+	res, err = http.Get(ts.URL + "/devices")
 	if err != nil {
 		t.Fatal(err)
 	}

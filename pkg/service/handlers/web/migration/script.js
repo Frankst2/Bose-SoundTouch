@@ -251,8 +251,9 @@ async function updateSettings() {
 
 async function fetchDevices() {
     try {
-        const response = await fetch("/setup/devices");
+        const response = await fetch("/devices");
         const devices = await response.json();
+        window._knownDevices = devices; // Store globally for easy lookup
         const container = document.getElementById("device-list");
         const syncSelector = document.getElementById("sync-device-list");
         const migrationSelector = document.getElementById("migration-device-list");
@@ -430,7 +431,7 @@ async function startSync() {
     log.innerHTML = "";
 
     try {
-        const response = await fetch("/setup/sync/" + encodeURIComponent(deviceId), {method: "POST"},);
+        const response = await fetch("/setup/devices/" + encodeURIComponent(deviceId) + "/sync", {method: "POST"},);
         if (response.ok) {
             status.style.backgroundColor = "#dfd";
             status.textContent = "✅ Sync completed successfully for " + display + "!";
@@ -927,7 +928,7 @@ async function fetchDeviceEvents(deviceId) {
     list.innerHTML = '<tr><td colspan="3" style="padding: 20px; text-align: center; color: #666;">Loading events...</td></tr>';
 
     try {
-        const response = await fetch(`/setup/devices/${deviceId}/events`);
+        const response = await fetch(`/devices/${deviceId}/events`);
         const data = await response.json();
         const events = data.events;
 
@@ -1146,7 +1147,7 @@ async function addManualDevice() {
     }
 
     try {
-        const response = await fetch("/setup/devices", {
+        const response = await fetch("/devices", {
             method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ip: ip}),
         });
 
@@ -1168,7 +1169,7 @@ async function removeDevice(deviceId, name) {
     }
 
     try {
-        const response = await fetch(`/setup/devices/${deviceId}`, {
+        const response = await fetch(`/devices/${deviceId}`, {
             method: "DELETE",
         });
 
@@ -1214,7 +1215,7 @@ async function pollDiscoveryStatus() {
 
 async function updateDeviceInfo(deviceId, ip) {
     try {
-        const response = await fetch("/setup/info/" + encodeURIComponent(deviceId));
+        const response = await fetch("/devices/" + encodeURIComponent(deviceId) + "/info");
         if (!response.ok) return;
         const info = await response.json();
 
@@ -1274,7 +1275,7 @@ async function showSummary(deviceId) {
     }
 
     try {
-        const response = await fetch("/setup/summary/" + encodeURIComponent(deviceId) + query,);
+        const response = await fetch("/setup/devices/" + encodeURIComponent(deviceId) + "/summary" + query,);
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(errorText);
@@ -1459,7 +1460,7 @@ async function revert(deviceId, ip) {
     statusDiv.innerHTML = "Reverting " + display + " to defaults...";
 
     try {
-        const response = await fetch("/setup/revert/" + encodeURIComponent(deviceId), {method: "POST"},);
+        const response = await fetch("/setup/devices/" + encodeURIComponent(deviceId) + "/revert", {method: "POST"},);
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
@@ -1491,7 +1492,7 @@ async function reboot(deviceId, ip) {
     statusDiv.innerHTML = "Rebooting " + display + "...";
 
     try {
-        const response = await fetch("/setup/reboot/" + encodeURIComponent(deviceId), {method: "POST"},);
+        const response = await fetch("/devices/" + encodeURIComponent(deviceId) + "/reboot", {method: "POST"},);
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
@@ -1537,7 +1538,7 @@ async function migrate(deviceId, ip) {
     }
 
     try {
-        const response = await fetch("/setup/migrate/" + encodeURIComponent(deviceId) + query, {method: "POST"},);
+        const response = await fetch("/setup/devices/" + encodeURIComponent(deviceId) + "/migrate" + query, {method: "POST"},);
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
@@ -1549,6 +1550,7 @@ async function migrate(deviceId, ip) {
             rebootBtn.style.display = "inline-block";
             rebootBtn.disabled = false;
             rebootBtn.style.border = "2px solid #000";
+            rebootBtn.onclick = () => reboot(deviceId);
 
             // Re-show summary but with prominence on reboot
             summaryDiv.style.display = "block";
@@ -1574,7 +1576,7 @@ async function trustCA(deviceId, ip) {
     statusDiv.innerHTML = "Injecting Root CA into shared trust store on " + display + "...";
 
     try {
-        const response = await fetch("/setup/trust-ca/" + encodeURIComponent(deviceId), {method: "POST"},);
+        const response = await fetch("/setup/devices/" + encodeURIComponent(deviceId) + "/trust-ca", {method: "POST"},);
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
@@ -1606,7 +1608,7 @@ async function ensureRemoteServices(deviceId, ip) {
     statusDiv.innerHTML = "Ensuring remote services for " + display + "...";
 
     try {
-        const response = await fetch("/setup/ensure-remote-services/" + encodeURIComponent(deviceId), {method: "POST"},);
+        const response = await fetch("/setup/devices/" + encodeURIComponent(deviceId) + "/ensure-remote-services", {method: "POST"},);
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
@@ -1640,7 +1642,7 @@ async function removeRemoteServices(deviceId, ip) {
     statusDiv.innerHTML = "Removing remote services for " + display + "...";
 
     try {
-        const response = await fetch("/setup/remove-remote-services/" + encodeURIComponent(deviceId), {method: "POST"},);
+        const response = await fetch("/setup/devices/" + encodeURIComponent(deviceId) + "/remove-remote-services", {method: "POST"},);
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
@@ -1668,7 +1670,7 @@ async function backupConfig(deviceId, ip) {
     statusDiv.innerHTML = "Creating backup for " + display + "...";
 
     try {
-        const response = await fetch("/setup/backup/" + encodeURIComponent(deviceId), {method: "POST"},);
+        const response = await fetch("/setup/devices/" + encodeURIComponent(deviceId) + "/backup", {method: "POST"},);
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
@@ -1697,7 +1699,7 @@ async function testConnection(deviceId, useExplicitCA) {
 
     try {
         const query = `?target_url=${encodeURIComponent(testUrl)}&use_explicit_ca=${useExplicitCA}`;
-        const response = await fetch(`/setup/test-connection/${encodeURIComponent(deviceId)}${query}`, {method: "POST"},);
+        const response = await fetch(`/setup/devices/test-connection/${encodeURIComponent(deviceId)}${query}`, {method: "POST"},);
         const result = await response.json();
 
         if (result.ok) {
@@ -1725,7 +1727,7 @@ async function testHostsRedirection(deviceId) {
 
     try {
         const query = `?target_url=${encodeURIComponent(targetUrl)}`;
-        const response = await fetch(`/setup/test-hosts/${encodeURIComponent(deviceId)}${query}`, {method: "POST"},);
+        const response = await fetch(`/setup/devices/${encodeURIComponent(deviceId)}/test-hosts${query}`, {method: "POST"},);
         const result = await response.json();
 
         if (result.ok) {
@@ -1753,7 +1755,7 @@ async function testDNSRedirection(deviceId) {
 
     try {
         const query = `?target_url=${encodeURIComponent(targetUrl)}`;
-        const response = await fetch(`/setup/test-dns/${encodeURIComponent(deviceId)}${query}`, {method: "POST"},);
+        const response = await fetch(`/setup/devices/${encodeURIComponent(deviceId)}/test-dns${query}`, {method: "POST"},);
         const result = await response.json();
 
         if (result.ok) {

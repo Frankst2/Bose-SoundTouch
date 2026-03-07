@@ -1,0 +1,16 @@
+footer {
+    margin-top: 50px;
+    padding: 20px;
+    font-size: 0.8em;
+    color: #666;
+    text-align: center;
+}
+
+#version-info a {
+    color: inherit;
+    text-decoration: none;
+}
+
+#version-info a:hover {
+    text-decoration: underline;
+}

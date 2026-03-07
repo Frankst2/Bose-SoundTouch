@@ -103,33 +103,104 @@ func TestStaticWeb(t *testing.T) {
 	ts := httptest.NewServer(r)
 	defer ts.Close()
 
-	// 1. Test CSS
-	res, err := http.Get(ts.URL + "/web/css/style.css")
+	// 1. Test Migration UI CSS
+	res, err := http.Get(ts.URL + "/web/migration/style.css")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		t.Errorf("CSS: Expected status OK, got %v", res.Status)
+		t.Errorf("Migration CSS: Expected status OK, got %v", res.Status)
 	}
 	if !strings.Contains(res.Header.Get("Content-Type"), "text/css") {
-		t.Errorf("CSS: Expected text/css content type, got %s", res.Header.Get("Content-Type"))
+		t.Errorf("Migration CSS: Expected text/css content type, got %s", res.Header.Get("Content-Type"))
 	}
 
-	// 2. Test JS
-	res, err = http.Get(ts.URL + "/web/js/script.js")
+	// 2. Test Migration UI JS
+	res, err = http.Get(ts.URL + "/web/migration/script.js")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		t.Errorf("JS: Expected status OK, got %v", res.Status)
+		t.Errorf("Migration JS: Expected status OK, got %v", res.Status)
 	}
 	if !strings.Contains(res.Header.Get("Content-Type"), "application/javascript") &&
 		!strings.Contains(res.Header.Get("Content-Type"), "text/javascript") {
-		t.Errorf("JS: Expected javascript content type, got %s", res.Header.Get("Content-Type"))
+		t.Errorf("Migration JS: Expected javascript content type, got %s", res.Header.Get("Content-Type"))
+	}
+
+	// 3. Test Migration UI Index
+	res, err = http.Get(ts.URL + "/web/migration/index.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("Migration Index: Expected status OK, got %v", res.Status)
+	}
+	if !strings.Contains(res.Header.Get("Content-Type"), "text/html") {
+		t.Errorf("Migration Index: Expected text/html content type, got %s", res.Header.Get("Content-Type"))
+	}
+
+	// 4. Test Stockholm Mini
+	res, err = http.Get(ts.URL + "/web/stockholm-mini/index.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("Stockholm Mini: Expected status OK, got %v", res.Status)
+	}
+	if !strings.Contains(res.Header.Get("Content-Type"), "text/html") {
+		t.Errorf("Stockholm Mini: Expected text/html content type, got %s", res.Header.Get("Content-Type"))
+	}
+
+	// 5. Test Stockholm Mini CSS
+	res, err = http.Get(ts.URL + "/web/stockholm-mini/style.css")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("Stockholm Mini CSS: Expected status OK, got %v", res.Status)
+	}
+	if !strings.Contains(res.Header.Get("Content-Type"), "text/css") {
+		t.Errorf("Stockholm Mini CSS: Expected text/css content type, got %s", res.Header.Get("Content-Type"))
+	}
+
+	// 6. Test Shared CSS
+	res, err = http.Get(ts.URL + "/web/shared/common.css")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("Shared CSS: Expected status OK, got %v", res.Status)
+	}
+	if !strings.Contains(res.Header.Get("Content-Type"), "text/css") {
+		t.Errorf("Shared CSS: Expected text/css content type, got %s", res.Header.Get("Content-Type"))
+	}
+
+	// 7. Test Shared JS
+	res, err = http.Get(ts.URL + "/web/shared/common.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		t.Errorf("Shared JS: Expected status OK, got %v", res.Status)
+	}
+	if !strings.Contains(res.Header.Get("Content-Type"), "application/javascript") &&
+		!strings.Contains(res.Header.Get("Content-Type"), "text/javascript") {
+		t.Errorf("Shared JS: Expected javascript content type, got %s", res.Header.Get("Content-Type"))
 	}
 
 	// 3. Test diff.min.js

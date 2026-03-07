@@ -761,10 +761,24 @@ func setupRouter(server *handlers.Server) *chi.Mux {
 	// Stockholm Mini app
 	r.Handle("/stockholm-mini/*", http.StripPrefix("/stockholm-mini/", http.FileServer(http.Dir("pkg/service/handlers/web/stockholm-mini"))))
 
+	r.Route("/devices", func(r chi.Router) {
+		r.Get("/", server.HandleListDiscoveredDevices)
+		r.Post("/", server.HandleAddManualDevice)
+
+		r.Route("/{deviceId}", func(r chi.Router) {
+			r.Delete("/", server.HandleRemoveDevice)
+			r.Get("/events", server.HandleGetDeviceEvents)
+			r.Get("/info", server.HandleGetDeviceInfo)
+			r.Get("/ws", server.HandleDeviceWebSocket)
+			r.Post("/key/{key}", server.HandleDeviceKey)
+			r.Post("/volume/{level}", server.HandleDeviceVolume)
+			r.Post("/reboot", server.HandleRebootDevice)
+		})
+	})
+
+	r.Get("/version", server.HandleGetVersionInfo)
+
 	r.Route("/setup", func(r chi.Router) {
-		r.Get("/devices", server.HandleListDiscoveredDevices)
-		r.Post("/devices", server.HandleAddManualDevice)
-		r.Delete("/devices/{deviceId}", server.HandleRemoveDevice)
 		r.Post("/discover", server.HandleTriggerDiscovery)
 		r.Get("/discovery-status", server.HandleGetDiscoveryStatus)
 		r.Get("/settings", server.HandleGetSettings)
@@ -785,7 +799,6 @@ func setupRouter(server *handlers.Server) *chi.Mux {
 		r.Get("/ca.crt", server.HandleGetCACert)
 		r.Get("/proxy-settings", server.HandleGetProxySettings)
 		r.Post("/proxy-settings", server.HandleUpdateProxySettings)
-		r.Get("/version", server.HandleGetVersionInfo)
 		r.Get("/interaction-stats", server.HandleGetInteractionStats)
 		r.Get("/interactions", server.HandleListInteractions)
 		r.Get("/interaction-content", server.HandleGetInteractionContent)
@@ -799,7 +812,19 @@ func setupRouter(server *handlers.Server) *chi.Mux {
 		r.Get("/dns-discoveries/download", server.HandleDownloadDNSDiscoveries)
 		r.Delete("/dns-discoveries", server.HandleClearDNSDiscoveries)
 
-		r.Get("/devices/{deviceId}/events", server.HandleGetDeviceEvents)
+		r.Route("/devices/{deviceId}", func(r chi.Router) {
+			r.Get("/summary", server.HandleGetMigrationSummary)
+			r.Post("/migrate", server.HandleMigrateDevice)
+			r.Post("/revert", server.HandleRevertMigration)
+			r.Post("/trust-ca", server.HandleTrustCACert)
+			r.Post("/ensure-remote-services", server.HandleEnsureRemoteServices)
+			r.Post("/remove-remote-services", server.HandleRemoveRemoteServices)
+			r.Post("/backup", server.HandleBackupConfig)
+			r.Post("/sync", server.HandleInitialSync)
+			r.Post("/test-connection", server.HandleTestConnection)
+			r.Post("/test-hosts", server.HandleTestHostsRedirection)
+			r.Post("/test-dns", server.HandleTestDNSRedirection)
+		})
 	})
 
 	r.NotFound(server.HandleNotFound)

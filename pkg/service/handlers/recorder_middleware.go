@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 )
@@ -12,7 +13,7 @@ import (
 // RecordMiddleware returns a middleware that records "self" requests and responses.
 func (s *Server) RecordMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if s.recorder == nil || !s.recordEnabled {
+		if s.recorder == nil || !s.recordEnabled || r.Header.Get("Upgrade") == "websocket" {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -52,6 +53,10 @@ func (s *Server) RecordMiddleware(next http.Handler) http.Handler {
 
 		// Create a response object for the recorder
 		res := rw.getRecordedResponse(r)
+		if res.StatusCode >= 400 {
+			log.Printf("[DEBUG_LOG] Recording error response: %d %s %s", res.StatusCode, r.Method, r.URL.Path)
+		}
+
 		if res.Body != nil {
 			defer func() { _ = res.Body.Close() }()
 		}
@@ -65,8 +70,9 @@ func (s *Server) RecordMiddleware(next http.Handler) http.Handler {
 
 type responseWriter struct {
 	http.ResponseWriter
-	statusCode int
-	body       *bytes.Buffer
+	statusCode  int
+	body        *bytes.Buffer
+	wroteHeader bool
 }
 
 func (rw *responseWriter) Header() http.Header {
@@ -74,18 +80,28 @@ func (rw *responseWriter) Header() http.Header {
 }
 
 func (rw *responseWriter) WriteHeader(code int) {
+	if rw.wroteHeader {
+		return
+	}
+
 	rw.statusCode = code
+	rw.wroteHeader = true
 	rw.ResponseWriter.WriteHeader(code)
 }
 
 func (rw *responseWriter) Write(b []byte) (int, error) {
+	if !rw.wroteHeader {
+		rw.WriteHeader(http.StatusOK)
+	}
+
 	rw.body.Write(b)
+
 	return rw.ResponseWriter.Write(b)
 }
 
 func (rw *responseWriter) getRecordedResponse(r *http.Request) *http.Response {
 	statusCode := rw.statusCode
-	if statusCode == 0 {
+	if !rw.wroteHeader && statusCode == 0 {
 		statusCode = http.StatusOK
 	}
 

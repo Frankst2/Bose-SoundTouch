@@ -53,6 +53,7 @@
 * [Upstream URLs](analysis/UPSTREAM-URLS.md)
 * [Anonymization Summary](analysis/ANONYMIZATION-SUMMARY.md)
 * [Device Redirect Methods](analysis/DEVICE-REDIRECT-METHODS.md)
+* [Stockholm App Analysis](analysis/stockholm-app-analysis.md)
 * [Wiki API Comparison](analysis/WIKI-COMPARISON.md)
 * [IoT Config Summary](analysis/IOT-CONFIG-SUMMARY.md)
 * [IoT Configuration Analysis](analysis/IOT-CONFIGURATION-ANALYSIS.md)
