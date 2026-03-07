@@ -753,6 +753,14 @@ func setupRouter(server *handlers.Server) *chi.Mux {
 
 	r.Get("/proxy/*", server.HandleProxyRequest)
 
+	r.Get("/devices", server.HandleListDiscoveredDevices)
+	r.Get("/devices/{deviceId}/info", server.HandleGetStockholmDeviceInfo)
+	r.Post("/devices/{deviceId}/key/{key}", server.HandleDeviceKey)
+	r.Post("/devices/{deviceId}/volume/{level}", server.HandleDeviceVolume)
+
+	// Stockholm Mini app
+	r.Handle("/stockholm-mini/*", http.StripPrefix("/stockholm-mini/", http.FileServer(http.Dir("pkg/service/handlers/web/stockholm-mini"))))
+
 	r.Route("/setup", func(r chi.Router) {
 		r.Get("/devices", server.HandleListDiscoveredDevices)
 		r.Post("/devices", server.HandleAddManualDevice)

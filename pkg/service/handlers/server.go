@@ -840,3 +840,23 @@ func (s *Server) resolveDeviceIDToIP(deviceID string) (string, error) {
 
 	return "", fmt.Errorf("device not found: %s", deviceID)
 }
+
+// lookupIP resolves a deviceId to its last known device IP.
+func (s *Server) lookupIP(deviceId string) (string, error) {
+	devices, err := s.ds.ListAllDevices()
+	if err != nil {
+		return "", err
+	}
+
+	for i := range devices {
+		if devices[i].DeviceID == deviceId {
+			if devices[i].IPAddress == "" {
+				return "", fmt.Errorf("no IP known for deviceId %s", deviceId)
+			}
+
+			return devices[i].IPAddress, nil
+		}
+	}
+
+	return "", fmt.Errorf("deviceId %s not found", deviceId)
+}
