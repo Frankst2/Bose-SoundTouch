@@ -356,6 +356,13 @@ func (ws *WebSocketClient) attemptReconnect(config *WebSocketConfig) {
 		}
 
 		attempt++
+
+		// Check if device is reachable before attempting full WS connection to reduce log noise
+		if err := ws.client.Ping(); err != nil {
+			ws.logger.Printf("Reconnection attempt %d skipped: device unreachable (%v)", attempt, err)
+			continue
+		}
+
 		ws.logger.Printf("Reconnection attempt %d", attempt)
 
 		if err := ws.connectWithConfig(config); err != nil {
