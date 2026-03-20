@@ -215,36 +215,87 @@ func (s *Server) performMirror(r *http.Request) *mirrorResponseRecorder {
 	}
 
 	// Preserve request body for recording before it gets consumed by the proxy
-	var requestForRecording *http.Request
-	if s.recorder != nil && s.recordEnabled {
-		requestForRecording = r.Clone(r.Context())
-		if snapshot != nil {
-			// Use snapshot for both proxy and recording
-			r.Body = io.NopCloser(bytes.NewReader(snapshot.Body))
-			requestForRecording.Body = io.NopCloser(bytes.NewReader(snapshot.Body))
-		} else if r.Body != nil {
-			// Compatibility fallback
-			bodyBytes, err := io.ReadAll(r.Body)
-			if err != nil {
-				log.Printf("[MIRROR_ERR] Failed to read request body for recording: %v", err)
-			} else {
-				// Restore body for proxy
-				r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-				// Set body for recording
-				requestForRecording.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-			}
-		}
+	requestForRecording := s.prepareRequestForRecording(r, snapshot)
 
-		// Ensure Content-Length is set for the recording clone
-		if requestForRecording.Body != nil {
-			if snapshot != nil {
-				requestForRecording.ContentLength = int64(len(snapshot.Body))
-			}
+	target := s.resolveMirrorTarget(r)
+	if target == nil {
+		return nil
+	}
+
+	// Capture response for parity check and recording
+	recorder := &mirrorResponseRecorder{
+		headers: make(http.Header),
+		body:    &bytes.Buffer{},
+	}
+
+	proxy := s.createMirrorProxy(target, requestForRecording)
+
+	// We use a dummy ResponseWriter to capture the results
+	proxy.ServeHTTP(recorder, r)
+
+	log.Printf("[MIRROR] Mirror completed for %s with status %d", r.URL.Path, recorder.status)
+
+	return recorder
+}
+
+func (s *Server) prepareRequestForRecording(r *http.Request, snapshot *RequestSnapshot) *http.Request {
+	if s.recorder == nil || !s.recordEnabled {
+		return nil
+	}
+
+	requestForRecording := r.Clone(r.Context())
+	if snapshot != nil {
+		// Use snapshot for both proxy and recording
+		r.Body = io.NopCloser(bytes.NewReader(snapshot.Body))
+		requestForRecording.Body = io.NopCloser(bytes.NewReader(snapshot.Body))
+		requestForRecording.ContentLength = int64(len(snapshot.Body))
+	} else if r.Body != nil {
+		// Compatibility fallback
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Printf("[MIRROR_ERR] Failed to read request body for recording: %v", err)
+			return nil
+		}
+		// Restore body for proxy
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		// Set body for recording
+		requestForRecording.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+	}
+
+	return requestForRecording
+}
+
+func (s *Server) resolveMirrorTarget(r *http.Request) *url.URL {
+	host := r.Host
+
+	s.mu.RLock()
+	localServerURL := s.serverURL
+	httpsServerURL := s.httpsServerURL
+	s.mu.RUnlock()
+
+	isLocalHost := host == "" || host == "localhost"
+
+	if localServerURL != "" {
+		u, err := url.Parse(localServerURL)
+		if err == nil && host == u.Host {
+			isLocalHost = true
 		}
 	}
 
-	host := r.Host
-	if host == "" || host == "localhost" {
+	if httpsServerURL != "" {
+		u, err := url.Parse(httpsServerURL)
+		if err == nil && host == u.Host {
+			isLocalHost = true
+		}
+	}
+
+	if isLocalHost {
+		if strings.HasPrefix(r.URL.Path, "/bmx/tunein") {
+			host = "content.api.bose.io"
+		} else {
+			host = "streaming.bose.com"
+		}
+	} else if host == "" {
 		host = "streaming.bose.com"
 	}
 
@@ -261,7 +312,10 @@ func (s *Server) performMirror(r *http.Request) *mirrorResponseRecorder {
 		return nil
 	}
 
-	// Create a proxy that doesn't write to the original ResponseWriter
+	return target
+}
+
+func (s *Server) createMirrorProxy(target *url.URL, requestForRecording *http.Request) *httputil.ReverseProxy {
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			pr.SetURL(target)
@@ -271,12 +325,6 @@ func (s *Server) performMirror(r *http.Request) *mirrorResponseRecorder {
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
-	}
-
-	// Capture response for parity check and recording
-	recorder := &mirrorResponseRecorder{
-		headers: make(http.Header),
-		body:    &bytes.Buffer{},
 	}
 
 	proxy.ModifyResponse = func(res *http.Response) error {
@@ -290,12 +338,7 @@ func (s *Server) performMirror(r *http.Request) *mirrorResponseRecorder {
 		return nil
 	}
 
-	// We use a dummy ResponseWriter to capture the results
-	proxy.ServeHTTP(recorder, r)
-
-	log.Printf("[MIRROR] Mirror completed for %s with status %d", r.URL.Path, recorder.status)
-
-	return recorder
+	return proxy
 }
 
 // checkParity compares local response with upstream response.
