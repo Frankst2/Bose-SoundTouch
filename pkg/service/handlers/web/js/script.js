@@ -1,3 +1,19 @@
+function showStatus(id, message, type = "info") {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerText = message;
+    // Reset classes and add semantic ones
+    el.className = "status status-" + type + " visible";
+}
+
+function hideStatus(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.remove("visible");
+        el.classList.add("hidden");
+    }
+}
+
 async function fetchSpotifyStatus() {
     try {
         const settingsResponse = await fetch("/setup/settings");
@@ -5,11 +21,14 @@ async function fetchSpotifyStatus() {
         const header = document.getElementById("spotify-status-header");
 
         if (!settings.spotify_configured) {
-            if (header) header.style.display = "none";
+            if (header) header.classList.add("hidden");
             return;
         }
 
-        if (header) header.style.display = "flex";
+        if (header) {
+            header.classList.remove("hidden");
+            header.classList.add("flex-visible");
+        }
 
         const response = await fetch("/mgmt/spotify/accounts");
         if (!response.ok) return;
@@ -18,23 +37,25 @@ async function fetchSpotifyStatus() {
         const linkBtn = document.getElementById("link-spotify-btn");
 
         if (data.accounts && data.accounts.length > 0) {
-            header.style.background = "#e6ffed";
-            header.style.border = "1px solid #28a745";
+            header.classList.add("spotify-badge-active");
             nameEl.innerText = data.accounts[0].display_name || data.accounts[0].user_id || "Linked";
-            if (linkBtn) linkBtn.style.display = "none";
+            if (linkBtn) linkBtn.classList.add("hidden");
 
             // Show Prime Spotify buttons on all devices
             document.querySelectorAll(".btn-spotify").forEach((btn) => {
-                btn.style.display = "inline-block";
+                btn.classList.remove("hidden");
+                btn.classList.add("visible");
             });
         } else {
-            header.style.background = "#f0f0f0";
-            header.style.border = "1px solid #ccc";
+            header.classList.remove("spotify-badge-active");
             nameEl.innerText = "Not Linked";
-            if (linkBtn) linkBtn.style.display = "inline-block";
+            if (linkBtn) {
+                linkBtn.classList.remove("hidden");
+                linkBtn.classList.add("visible");
+            }
 
             document.querySelectorAll(".btn-spotify").forEach((btn) => {
-                btn.style.display = "none";
+                btn.classList.add("hidden");
             });
         }
     } catch (error) {
@@ -45,7 +66,7 @@ async function fetchSpotifyStatus() {
 function toggleInfo(id) {
     const el = document.getElementById(id);
     if (el) {
-        el.style.display = el.style.display === "block" ? "none" : "block";
+        el.classList.toggle("visible");
     }
 }
 
@@ -90,6 +111,7 @@ async function primeSpotify(deviceId) {
     const originalText = btn.innerText;
     btn.innerText = "Priming...";
     btn.disabled = true;
+    btn.classList.add("btn-loading");
 
     try {
         const response = await fetch(`/mgmt/spotify/prime?deviceId=${encodeURIComponent(deviceId)}`, {
@@ -97,24 +119,29 @@ async function primeSpotify(deviceId) {
         },);
         if (response.ok) {
             btn.innerText = "✅ Primed";
-            btn.style.background = "#28a745";
+            btn.classList.remove("btn-loading");
+            btn.classList.add("btn-success");
             setTimeout(() => {
                 btn.innerText = originalText;
-                btn.style.background = "";
+                btn.classList.remove("btn-success");
                 btn.disabled = false;
             }, 3000);
         } else {
             const err = await response.text();
             alert("Failed to prime Spotify: " + err);
             btn.innerText = "❌ Failed";
+            btn.classList.remove("btn-loading");
+            btn.classList.add("btn-error");
             setTimeout(() => {
                 btn.innerText = originalText;
+                btn.classList.remove("btn-error");
                 btn.disabled = false;
             }, 3000);
         }
     } catch (error) {
         alert("Error priming Spotify: " + error.message);
         btn.innerText = originalText;
+        btn.classList.remove("btn-loading");
         btn.disabled = false;
     }
 }
@@ -168,9 +195,9 @@ async function fetchSettings() {
         const spotifyStatus = document.getElementById("spotify-config-status");
         if (spotifyStatus) {
             if (settings.spotify_configured) {
-                spotifyStatus.innerHTML = '<span style="color: green;">✅ Configured</span> (Client ID present)';
+                spotifyStatus.innerHTML = '<span class="status-success">✅ Configured</span> (Client ID present)';
             } else {
-                spotifyStatus.innerHTML = '<span style="color: #666;">❌ Not Configured</span><br>' + '<span style="font-size: 0.85em; color: #888;">To enable Spotify, provide <code>SPOTIFY_CLIENT_ID</code> and <code>SPOTIFY_CLIENT_SECRET</code> to the server.</span>';
+                spotifyStatus.innerHTML = '<span class="status-info">❌ Not Configured</span><br>' + '<span class="help-text">To enable Spotify, provide <code>SPOTIFY_CLIENT_ID</code> and <code>SPOTIFY_CLIENT_SECRET</code> to the server.</span>';
             }
         }
 
@@ -209,6 +236,9 @@ async function updateProxySettings() {
 }
 
 async function updateSettings() {
+    const statusId = "settings-status";
+    showStatus(statusId, "Saving...", "info");
+
     const settings = {
         server_url: document.getElementById("target-domain").value,
         discovery_interval: document.getElementById("discovery-interval").value,
@@ -234,26 +264,23 @@ async function updateSettings() {
             .map((s) => s.trim())
             .filter((s) => s !== ""),
     };
-    const status = document.getElementById("settings-status");
-    status.innerText = "Saving...";
-    status.style.color = "blue";
 
     try {
         const response = await fetch("/setup/settings", {
             method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(settings),
         });
         if (response.ok) {
-            status.innerText = "✅ Settings saved. Restart service to apply all changes (like certificate SANs).";
-            status.style.color = "green";
-            setTimeout(() => fetchSettings(), 500); // Give backend a moment to settle
+            showStatus(statusId, "✅ Settings saved. Restart service to apply all changes (like certificate SANs).", "success");
+            setTimeout(() => {
+                fetchSettings();
+                hideStatus(statusId);
+            }, 3000);
         } else {
             const err = await response.text();
-            status.innerText = "❌ Failed: " + err;
-            status.style.color = "red";
+            showStatus(statusId, "❌ Failed: " + err, "error");
         }
     } catch (error) {
-        status.innerText = "❌ Error: " + error.message;
-        status.style.color = "red";
+        showStatus(statusId, "❌ Error: " + error.message, "error");
     }
 }
 
@@ -284,15 +311,15 @@ async function fetchDevices() {
                 const methodLabel = d.discovery_method === "manual" ? "👤 Manual" : "🔍 Auto";
                 html += `
                     <tr id="device-row-${d.device_id}">
-                        <td class="col-name-model"><div class="col-name">${d.name}</div><div class="col-model" style="font-size: 0.8em; color: #666;">${d.product_code}</div></td>
+                        <td class="col-name-model"><div class="col-name">${d.name}</div><div class="col-model text-muted font-size-sm">${d.product_code}</div></td>
                         <td class="col-ip">${d.ip_address}</td>
-                        <td class="col-ids"><div class="col-deviceid">${d.device_id}</div><div class="col-accountid" style="font-size: 0.8em; color: #666;">${d.account_id || "default"}</div></td>
-                        <td class="col-fw-serial"><div class="col-firmware">${d.firmware_version || "0.0.0"}</div><div class="col-serial" style="font-size: 0.8em; color: #666;">${d.device_serial_number}</div></td>
+                        <td class="col-ids"><div class="col-deviceid">${d.device_id}</div><div class="col-accountid text-muted font-size-sm">${d.account_id || "default"}</div></td>
+                        <td class="col-fw-serial"><div class="col-firmware">${d.firmware_version || "0.0.0"}</div><div class="col-serial text-muted font-size-sm">${d.device_serial_number}</div></td>
                         <td class="col-method">${methodLabel}</td>
                         <td>
                             <button onclick="prepareSync('${d.device_id}')">Sync Data</button>
                             <button onclick="prepareMigration('${d.device_id}')">Migrate</button>
-                            <button id="prime-spotify-${d.device_id}" class="btn-spotify" style="display: none;" onclick="primeSpotify('${d.device_id}')">Prime Spotify</button>
+                            <button id="prime-spotify-${d.device_id}" class="btn-spotify hidden" onclick="primeSpotify('${d.device_id}')">Prime Spotify</button>
                             <button class="btn-danger" onclick="removeDevice('${d.device_id}', '${d.name}')">Remove</button>
                         </td>
                     </tr>
@@ -343,19 +370,19 @@ function prepareMigration(deviceId) {
 }
 
 function openTab(evt, tabId) {
-    const tabcontents = document.getElementsByClassName("tab-content");
-    for (let i = 0; i < tabcontents.length; i++) {
-        tabcontents[i].className = tabcontents[i].className.replace(" active", "");
-    }
+    const tabcontents = document.querySelectorAll(".tab-content");
+    tabcontents.forEach((tc) => {
+        tc.classList.remove("active");
+    });
 
-    const tablinks = document.getElementsByClassName("tab-btn");
-    for (let i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
-    }
+    const tablinks = document.querySelectorAll(".tab-btn");
+    tablinks.forEach((tl) => {
+        tl.classList.remove("active");
+    });
 
     const content = document.getElementById(tabId);
     if (content) {
-        content.className += " active";
+        content.classList.add("active");
     }
 
     if (tabId === "tab-interactions") {
@@ -373,16 +400,15 @@ function openTab(evt, tabId) {
     }
 
     if (evt) {
-        evt.currentTarget.className += " active";
+        evt.currentTarget.classList.add("active");
     } else {
         // Find the button that corresponds to the tabId and activate it
-        for (let i = 0; i < tablinks.length; i++) {
-            const onclick = tablinks[i].getAttribute("onclick");
+        tablinks.forEach((tl) => {
+            const onclick = tl.getAttribute("onclick");
             if (onclick && onclick.includes(tabId)) {
-                tablinks[i].className += " active";
-                break;
+                tl.classList.add("active");
             }
-        }
+        });
     }
 }
 
@@ -434,27 +460,24 @@ async function startSync() {
     const results = document.getElementById("sync-results");
     const log = document.getElementById("sync-log");
 
-    status.style.display = "block";
-    status.style.backgroundColor = "#eef";
     const display = getDeviceDisplayName(deviceId);
-    status.textContent = "Syncing data from " + display + "...";
-    results.style.display = "none";
+    showStatus("sync-status", "Syncing data from " + display + "...", "info");
+    results.classList.add("hidden");
     log.innerHTML = "";
 
     try {
         const response = await fetch("/setup/sync/" + encodeURIComponent(deviceId), {method: "POST"},);
         if (response.ok) {
-            status.style.backgroundColor = "#dfd";
-            status.textContent = "✅ Sync completed successfully for " + display + "!";
-            results.style.display = "block";
+            showStatus("sync-status", "✅ Sync completed successfully for " + display + "!", "success");
+            results.classList.remove("hidden");
+            results.classList.add("visible");
             log.innerHTML = "Data fetched and saved to local datastore for " + display + ".\nPresets: OK\nRecents: OK\nSources: OK";
         } else {
             const err = await response.text();
             throw new Error(err);
         }
     } catch (error) {
-        status.style.backgroundColor = "#fdd";
-        status.textContent = "❌ Sync failed for " + display + ": " + error.message;
+        showStatus("sync-status", "❌ Sync failed for " + display + ": " + error.message, "error");
     }
 }
 
@@ -499,7 +522,7 @@ async function fetchAccountDetails(accountId) {
     try {
         const response = await fetch(`/mgmt/accounts/${encodeURIComponent(accountId)}`);
         if (!response.ok) {
-            if (metadataEl) metadataEl.innerHTML = `<span style="color:red">Failed to load account details: ${response.statusText}</span>`;
+            if (metadataEl) metadataEl.innerHTML = `<span class="status-error">Failed to load account details: ${response.statusText}</span>`;
             return;
         }
         const data = await response.json();
@@ -520,7 +543,7 @@ async function fetchAccountDetails(accountId) {
                             <option value="en" ${data.account.preferred_language === "en" || !data.account.preferred_language ? "selected" : ""}>en</option>
                             <option value="de" ${data.account.preferred_language === "de" ? "selected" : ""}>de</option>
                         </select>
-                        <span id="language-update-status" style="margin-left: 8px; font-size: 0.8em; display: none;">Saving...</span>
+                        <span id="language-update-status" class="status-inline hidden">Saving...</span>
                     </td></tr>
                     <tr><td style="padding: 4px"><strong>Provider Settings:</strong></td><td style="padding: 4px">
                         ${data.account.provider_settings && data.account.provider_settings.length > 0 ?
@@ -570,8 +593,7 @@ async function fetchAccountDetails(accountId) {
                     const newLang = e.target.value;
                     if (statusEl) {
                         statusEl.innerText = "Saving...";
-                        statusEl.style.display = "inline";
-                        statusEl.style.color = "#666";
+                        statusEl.className = "status-inline status-info visible";
                     }
                     try {
                         const response = await fetch(`/mgmt/accounts/${data.account.account_id}/language`, {
@@ -584,9 +606,10 @@ async function fetchAccountDetails(accountId) {
                         if (response.ok) {
                             if (statusEl) {
                                 statusEl.innerText = "Saved!";
-                                statusEl.style.color = "#28a745";
+                                statusEl.className = "status-inline status-success visible";
                                 setTimeout(() => {
-                                    statusEl.style.display = "none";
+                                    statusEl.classList.remove("visible");
+                                    statusEl.classList.add("hidden");
                                 }, 2000);
                             }
                         } else {
@@ -596,7 +619,7 @@ async function fetchAccountDetails(accountId) {
                         console.error("Failed to update language", error);
                         if (statusEl) {
                             statusEl.innerText = "Error!";
-                            statusEl.style.color = "#dc3545";
+                            statusEl.className = "status-inline status-error visible";
                         }
                     }
                 });
@@ -613,8 +636,7 @@ async function fetchAccountDetails(accountId) {
 
                     if (statusEl) {
                         statusEl.innerText = "Saving...";
-                        statusEl.style.display = "inline";
-                        statusEl.style.color = "#666";
+                        statusEl.className = "status-inline status-info visible";
                     }
 
                     try {
@@ -632,9 +654,10 @@ async function fetchAccountDetails(accountId) {
                         if (response.ok) {
                             if (statusEl) {
                                 statusEl.innerText = "Saved!";
-                                statusEl.style.color = "#28a745";
+                                statusEl.className = "status-inline status-success visible";
                                 setTimeout(() => {
-                                    statusEl.style.display = "none";
+                                    statusEl.classList.remove("visible");
+                                    statusEl.classList.add("hidden");
                                 }, 2000);
                             }
                         } else {
@@ -644,7 +667,7 @@ async function fetchAccountDetails(accountId) {
                         console.error("Failed to update provider setting", error);
                         if (statusEl) {
                             statusEl.innerText = "Error!";
-                            statusEl.style.color = "#dc3545";
+                            statusEl.className = "status-inline status-error visible";
                         }
                     }
                 });
@@ -667,7 +690,7 @@ async function fetchAccountDetails(accountId) {
                         </div>
                     </div>
 
-                    <div id="device-details-${device.device_id}" style="display: none; margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee">
+                    <div id="device-details-${device.device_id}" class="hidden" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
                             <div>
                                 <h5 style="margin: 10px 0 5px 0">Device Metadata</h5>
@@ -756,7 +779,7 @@ async function fetchAccountDetails(accountId) {
         }
 
     } catch (error) {
-        if (metadataEl) metadataEl.innerHTML = `<span style="color:red">Error: ${error.message}</span>`;
+        if (metadataEl) metadataEl.innerHTML = `<span class="status-error">Error: ${error.message}</span>`;
         console.error("Failed to fetch account details", error);
     }
 }
@@ -775,7 +798,7 @@ async function fetchInteractionStats() {
 
         const statsContainer = document.getElementById("interaction-stats-container",);
         if (statsContainer) {
-            statsContainer.style.display = "block";
+            statsContainer.classList.add("visible");
         }
 
         const serviceList = document.getElementById("stats-by-service");
@@ -826,7 +849,7 @@ async function fetchInteractionStats() {
                 const li = document.createElement("li");
                 li.innerHTML = `
                     <span class="session-info"><strong>${sessionDisplay}:</strong> ${count || 0} requests</span>
-                    <div style="display: flex; gap: 5px;">
+                    <div class="flex-row gap-sm">
                         <button onclick="downloadSession('${session || ""}')" class="btn-info" style="font-size: 0.8em; padding: 2px 5px;">Download</button>
                         <button onclick="filterBySession('${session || ""}')" style="font-size: 0.8em; padding: 2px 5px;">Filter</button>
                         <button onclick="deleteSession('${session || ""}')" class="btn-danger" style="font-size: 0.8em; padding: 2px 5px;">Delete</button>
@@ -940,13 +963,13 @@ async function fetchInteractions() {
         // Show the parent summary box if it was hidden
         const browseContainer = list.closest(".summary-box");
         if (browseContainer) {
-            browseContainer.style.display = "block";
+            browseContainer.classList.add("visible");
         }
 
         list.innerHTML = "";
 
         if (!interactions || interactions.length === 0) {
-            list.innerHTML = '<tr><td colspan="8" style="padding: 20px; text-align: center; color: #666;">No interactions found for current filters.</td></tr>';
+            list.innerHTML = '<tr><td colspan="8" class="status status-info visible" style="text-align: center;">No interactions found for current filters.</td></tr>';
             return;
         }
 
@@ -965,7 +988,6 @@ async function fetchInteractions() {
 
         interactions.forEach((i) => {
             const tr = document.createElement("tr");
-            tr.style.borderBottom = "1px solid #eee";
 
             const counter = i.counter || i.Counter || 0;
             const timestamp = i.timestamp || i.Timestamp || "";
@@ -994,14 +1016,14 @@ async function fetchInteractions() {
             }
 
             tr.innerHTML = `
-                <td style="padding: 8px; color: #888;">${counter}</td>
-                <td style="padding: 8px; font-size: 0.8em; white-space: nowrap;">${timestamp}</td>
-                <td style="padding: 8px; font-family: monospace;">${method}</td>
-                <td style="padding: 8px; font-size: 0.9em;">${path}</td>
-                <td style="padding: 8px;"><span class="badge ${statusClass}">${status || "???"}</span></td>
-                <td style="padding: 8px;"><span class="badge category-${category}">${category}</span></td>
-                <td style="padding: 8px;">${eventDetails}</td>
-                <td style="padding: 8px;"><button onclick="viewInteraction('${file}')">View</button></td>
+                <td class="col-counter">${counter}</td>
+                <td class="col-timestamp">${timestamp}</td>
+                <td class="col-method"><code>${method}</code></td>
+                <td class="col-path">${path}</td>
+                <td class="col-status"><span class="badge ${statusClass}">${status || "???"}</span></td>
+                <td class="col-category"><span class="badge category-${category}">${category}</span></td>
+                <td class="col-scmudc">${eventDetails}</td>
+                <td class="col-action"><button onclick="viewInteraction('${file}')">View</button></td>
             `;
             list.appendChild(tr);
         });
@@ -1128,10 +1150,10 @@ async function viewInteraction(file) {
 
         document.getElementById("viewer-filename").innerText = file;
         document.getElementById("interaction-content").innerText = content;
-        document.getElementById("interaction-viewer").style.display = "block";
-        document
-            .getElementById("interaction-viewer")
-            .scrollIntoView({behavior: "smooth"});
+        const viewer = document.getElementById("interaction-viewer");
+        viewer.classList.remove("hidden");
+        viewer.classList.add("visible");
+        viewer.scrollIntoView({behavior: "smooth"});
     } catch (error) {
         alert("Failed to load interaction content: " + error);
     }
@@ -1155,13 +1177,12 @@ async function fetchDNSDiscoveries() {
         list.innerHTML = "";
 
         if (!discoveries || discoveries.length === 0) {
-            list.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align: center; color: #666;">No DNS queries discovered yet.</td></tr>';
+            list.innerHTML = '<tr><td colspan="6" class="status status-info visible" style="text-align: center;">No DNS queries discovered yet.</td></tr>';
             return;
         }
 
         discoveries.forEach((d) => {
             const tr = document.createElement("tr");
-            tr.style.borderBottom = "1px solid #eee";
 
             const hostname = d.hostname || "";
             const lastSeen = d.last_seen || "";
@@ -1171,12 +1192,12 @@ async function fetchDNSDiscoveries() {
             const remoteAddr = d.remote_addr || "unknown";
 
             tr.innerHTML = `
-                <td style="padding: 8px; font-weight: bold;">${hostname}</td>
-                <td style="padding: 8px; font-size: 0.85em;">${lastSeen}</td>
-                <td style="padding: 8px; text-align: center;">${count}</td>
-                <td style="padding: 8px; text-align: center;">${isBose}</td>
-                <td style="padding: 8px;"><span class="badge category-${category}">${category}</span></td>
-                <td style="padding: 8px; font-size: 0.8em; color: #666;">${remoteAddr}</td>
+                <td class="col-hostname">${hostname}</td>
+                <td class="col-timestamp">${lastSeen}</td>
+                <td class="col-counter" style="text-align: center;">${count}</td>
+                <td class="col-bose" style="text-align: center;">${isBose}</td>
+                <td class="col-category"><span class="badge category-${category}">${category}</span></td>
+                <td class="col-remote-addr">${remoteAddr}</td>
             `;
             list.appendChild(tr);
         });
@@ -1211,7 +1232,8 @@ function downloadDNSDiscoveries() {
 
 async function showDeviceEvents() {
     const overlay = document.getElementById("device-events-overlay");
-    overlay.style.display = "block";
+    overlay.classList.remove("hidden");
+    overlay.classList.add("visible");
     overlay.scrollIntoView({behavior: "smooth"});
 
     // Ensure device selector is populated (handled by fetchDevices)
@@ -1226,7 +1248,7 @@ async function fetchDeviceEvents(deviceId) {
     if (!deviceId) return;
 
     const list = document.getElementById("events-list");
-    list.innerHTML = '<tr><td colspan="3" style="padding: 20px; text-align: center; color: #666;">Loading events...</td></tr>';
+    list.innerHTML = '<tr><td colspan="3" class="status status-info visible" style="text-align: center;">Loading events...</td></tr>';
 
     try {
         const response = await fetch(`/setup/devices/${deviceId}/events`);
@@ -1235,7 +1257,7 @@ async function fetchDeviceEvents(deviceId) {
 
         list.innerHTML = "";
         if (!events || events.length === 0) {
-            list.innerHTML = '<tr><td colspan="3" style="padding: 20px; text-align: center; color: #666;">No events found for this device.</td></tr>';
+            list.innerHTML = '<tr><td colspan="3" class="status status-info visible" style="text-align: center;">No events found for this device.</td></tr>';
             return;
         }
 
@@ -1244,27 +1266,26 @@ async function fetchDeviceEvents(deviceId) {
 
         events.forEach((e) => {
             const tr = document.createElement("tr");
-            tr.style.borderBottom = "1px solid #eee";
 
             const time = e.time || "";
             const type = e.type || "";
             const data = JSON.stringify(e.data || {});
 
             tr.innerHTML = `
-                <td style="padding: 8px; font-size: 0.8em; white-space: nowrap;">${time}</td>
-                <td style="padding: 8px;"><span class="badge category-self">${type}</span></td>
-                <td style="padding: 8px; font-size: 0.85em; font-family: monospace; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title='${data}'>${data}</td>
+                <td class="col-timestamp">${time}</td>
+                <td class="col-category"><span class="badge category-self">${type}</span></td>
+                <td class="col-data" title='${data}'>${data}</td>
             `;
             list.appendChild(tr);
         });
     } catch (error) {
-        list.innerHTML = `<tr><td colspan="3" style="padding: 20px; text-align: center; color: #f44336;">Error loading events: ${error.message}</td></tr>`;
+        list.innerHTML = `<tr><td colspan="3" class="status status-error visible" style="text-align: center;">Error loading events: ${error.message}</td></tr>`;
     }
 }
 
 async function fetchParityMismatches() {
     const list = document.getElementById("parity-mismatches-list");
-    list.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">Loading mismatches...</td></tr>';
+    list.innerHTML = '<tr><td colspan="5" class="status status-info visible" style="text-align: center;">Loading mismatches...</td></tr>';
 
     try {
         const response = await fetch("/setup/parity-mismatches");
@@ -1272,13 +1293,12 @@ async function fetchParityMismatches() {
 
         list.innerHTML = "";
         if (!mismatches || mismatches.length === 0) {
-            list.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #666;">No parity mismatches detected yet.</td></tr>';
+            list.innerHTML = '<tr><td colspan="5" class="status status-info visible" style="text-align: center;">No parity mismatches detected yet.</td></tr>';
             return;
         }
 
         mismatches.forEach((m) => {
             const tr = document.createElement("tr");
-            tr.style.borderBottom = "1px solid #eee";
 
             const time = m.timestamp || "";
             const method = m.method || "";
@@ -1286,16 +1306,16 @@ async function fetchParityMismatches() {
             const reasons = (m.reasons || []).join(", ");
 
             tr.innerHTML = `
-                <td style="padding: 8px; font-size: 0.8em;">${time}</td>
-                <td style="padding: 8px; font-family: monospace;">${method}</td>
-                <td style="padding: 8px; font-size: 0.9em;">${path}</td>
-                <td style="padding: 8px; font-size: 0.85em; color: #c62828;">${reasons}</td>
-                <td style="padding: 8px;"><button onclick='viewParityMismatch(${JSON.stringify(m)})'>View Diff</button></td>
+                <td class="col-timestamp">${time}</td>
+                <td class="col-method"><code>${method}</code></td>
+                <td class="col-path">${path}</td>
+                <td class="col-reasons status-error" style="font-size: 0.85em; border: none; background: transparent;">${reasons}</td>
+                <td class="col-action"><button onclick='viewParityMismatch(${JSON.stringify(m)})'>View Diff</button></td>
             `;
             list.appendChild(tr);
         });
     } catch (error) {
-        list.innerHTML = `<tr><td colspan="5" style="padding: 20px; text-align: center; color: #f44336;">Error loading mismatches: ${error.message}</td></tr>`;
+        list.innerHTML = `<tr><td colspan="5" class="status status-error visible" style="text-align: center;">Error loading mismatches: ${error.message}</td></tr>`;
     }
 }
 
@@ -1304,7 +1324,7 @@ async function clearParityMismatches() {
     try {
         await fetch("/setup/parity-mismatches", {method: "DELETE"});
         fetchParityMismatches();
-        document.getElementById("parity-diff-view").style.display = "none";
+        hideStatus("parity-diff-view");
     } catch (error) {
         alert("Failed to clear mismatches: " + error.message);
     }
@@ -1334,14 +1354,15 @@ function viewParityMismatch(m, forceRichDiff = false) {
     const warningEl = document.getElementById("diff-size-warning");
 
     if (isLarge && !forceRichDiff) {
-        warningEl.style.display = "block";
+        warningEl.classList.add("visible");
         const forceBtn = document.getElementById("force-rich-diff-btn");
         forceBtn.onclick = () => viewParityMismatch(m, true);
 
         document.getElementById("diff-local-body").innerText = localBody;
         document.getElementById("diff-upstream-body").innerText = upstreamBody;
     } else {
-        warningEl.style.display = "none";
+        warningEl.classList.remove("visible");
+        warningEl.classList.add("hidden");
         if (typeof Diff !== 'undefined') {
             const diff = Diff.diffChars(localBody, upstreamBody);
             const localEl = document.getElementById("diff-local-body");
@@ -1371,10 +1392,10 @@ function viewParityMismatch(m, forceRichDiff = false) {
         }
     }
 
-    document.getElementById("parity-diff-view").style.display = "block";
-    document
-        .getElementById("parity-diff-view")
-        .scrollIntoView({behavior: "smooth"});
+    const diffView = document.getElementById("parity-diff-view");
+    diffView.classList.remove("hidden");
+    diffView.classList.add("visible");
+    diffView.scrollIntoView({behavior: "smooth"});
 }
 
 function formatBody(body, contentType) {
@@ -1487,13 +1508,13 @@ async function removeDevice(deviceId, name) {
 
 async function triggerDiscovery() {
     const indicator = document.getElementById("discovery-indicator");
-    if (indicator) indicator.style.display = "inline";
+    if (indicator) indicator.classList.remove("hidden");
     try {
         await fetch("/setup/discover", {method: "POST"});
         pollDiscoveryStatus();
     } catch (error) {
         console.error("Failed to trigger discovery", error);
-        if (indicator) indicator.style.display = "none";
+        if (indicator) indicator.classList.add("hidden");
     }
 }
 
@@ -1505,12 +1526,12 @@ async function pollDiscoveryStatus() {
         if (data.discovering) {
             setTimeout(pollDiscoveryStatus, 2000);
         } else {
-            if (indicator) indicator.style.display = "none";
+            if (indicator) indicator.classList.add("hidden");
             fetchDevices();
         }
     } catch (error) {
         console.error("Failed to check discovery status", error);
-        if (indicator) indicator.style.display = "none";
+        if (indicator) indicator.classList.add("hidden");
     }
 }
 
@@ -1548,10 +1569,11 @@ async function updateDeviceInfo(deviceId, ip) {
 
 async function showSummary(deviceId) {
     if (!deviceId) {
-        document.getElementById("migration-summary").style.display = "none";
+        document.getElementById("migration-summary").classList.add("hidden");
         return;
     }
     const targetUrl = document.getElementById("target-domain").value;
+    const display = getDeviceDisplayName(deviceId);
 
     const opts = {
         marge: document.getElementById("opt-marge").value,
@@ -1560,15 +1582,14 @@ async function showSummary(deviceId) {
         bmx: document.getElementById("opt-bmx").value,
     };
 
-    const statusDiv = document.getElementById("status");
-    statusDiv.style.display = "block";
-    statusDiv.style.backgroundColor = "#ffffcc";
+    showStatus("migration-fetch-status", "Fetching summary for " + display + "...", "info");
 
-    const display = getDeviceDisplayName(deviceId);
-    statusDiv.innerHTML = "Fetching summary for " + display + "...";
+    const migrationSummary = document.getElementById("migration-summary");
+    migrationSummary.classList.add("hidden");
+    migrationSummary.classList.remove("visible");
 
     const outputBox = document.getElementById("command-output-box");
-    if (outputBox) outputBox.style.display = "none";
+    if (outputBox) outputBox.classList.add("hidden");
 
     let query = "?target_url=" + encodeURIComponent(targetUrl);
     for (let k in opts) {
@@ -1576,14 +1597,14 @@ async function showSummary(deviceId) {
     }
 
     try {
-        const response = await fetch("/setup/summary/" + encodeURIComponent(deviceId) + query,);
+        const response = await fetch("/setup/summary/" + encodeURIComponent(deviceId) + query);
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(errorText);
         }
         const summary = await response.json();
 
-        statusDiv.style.display = "none";
+        hideStatus("migration-fetch-status");
 
         const ip = summary.ip_address || deviceId;
         const finalDisplay = summary.device_name ? `${summary.device_name} (${ip})` : ip;
@@ -1614,27 +1635,38 @@ async function showSummary(deviceId) {
             if (accountIdEl && summary.account_id) accountIdEl.innerText = summary.account_id;
         }
 
-        document.getElementById("ssh-status").innerText = summary.ssh_success ? "✅ Success" : "❌ Failed";
-        document.getElementById("ssh-status").style.color = summary.ssh_success ? "green" : "red";
+        const sshStatus = document.getElementById("ssh-status");
+        sshStatus.innerText = summary.ssh_success ? "✅ Success" : "❌ Failed";
+        sshStatus.className = summary.ssh_success ? "status-success" : "status-error";
 
         const migrationStatus = document.getElementById("migration-status");
         migrationStatus.innerText = summary.is_migrated ? "✅ Migrated to AfterTouch" : "❌ Not Migrated";
-        migrationStatus.style.color = summary.is_migrated ? "green" : "red";
-        migrationStatus.style.fontWeight = "bold";
+        migrationStatus.className = "fw-bold " + (summary.is_migrated ? "status-success" : "status-error");
 
-        document.getElementById("original-config-status").style.display = summary.original_config ? "block" : "none";
-        document.getElementById("no-original-config-status").style.display = summary.original_config ? "none" : "block";
+        const originalConfigStatus = document.getElementById("original-config-status");
+        const noOriginalConfigStatus = document.getElementById("no-original-config-status");
+        if (summary.original_config) {
+            originalConfigStatus.classList.remove("hidden");
+            originalConfigStatus.classList.add("visible");
+            noOriginalConfigStatus.classList.add("hidden");
+        } else {
+            originalConfigStatus.classList.add("hidden");
+            noOriginalConfigStatus.classList.remove("hidden");
+            noOriginalConfigStatus.classList.add("visible");
+        }
         document.getElementById("original-config-content").innerText = summary.original_config || "";
-        document.getElementById("original-config-pane").style.display = "none";
+        document.getElementById("original-config-pane").classList.add("hidden");
 
+        const serviceOptions = document.getElementById("service-options");
         if (summary.parsed_current_config) {
-            document.getElementById("service-options").style.display = "block";
+            serviceOptions.classList.remove("hidden");
+            serviceOptions.classList.add("visible");
             document.getElementById("orig-marge").innerText = summary.parsed_current_config.margeServerUrl;
             document.getElementById("orig-stats").innerText = summary.parsed_current_config.statsServerUrl;
             document.getElementById("orig-sw_update").innerText = summary.parsed_current_config.swUpdateUrl;
             document.getElementById("orig-bmx").innerText = summary.parsed_current_config.bmxRegistryUrl;
         } else {
-            document.getElementById("service-options").style.display = "none";
+            serviceOptions.classList.add("hidden");
         }
 
         const remoteStatus = document.getElementById("remote-services-status");
@@ -1642,31 +1674,37 @@ async function showSummary(deviceId) {
         if (summary.ssh_success) {
             if (summary.remote_services_enabled) {
                 remoteStatus.innerText = summary.remote_services_persistent ? "✅ Yes" : "⚠️ Yes (non-persistent)";
-                remoteStatus.style.color = summary.remote_services_persistent ? "green" : "orange";
+                remoteStatus.className = summary.remote_services_persistent ? "status-success" : "status-warning";
             } else {
                 remoteStatus.innerText = "❌ No";
-                remoteStatus.style.color = "red";
+                remoteStatus.className = "status-error";
             }
             remoteFound.innerText = summary.remote_services_found && summary.remote_services_found.length > 0 ? "(" + summary.remote_services_found.join(", ") + ")" : "";
 
             const caTrustStatus = document.getElementById("ca-trust-status");
             caTrustStatus.innerText = summary.ca_cert_trusted ? "✅ Yes" : "❌ No";
-            caTrustStatus.style.color = summary.ca_cert_trusted ? "green" : "red";
-            document.getElementById("trust-ca-btn").style.display = summary.ca_cert_trusted ? "none" : "inline-block";
-            document.getElementById("trust-ca-btn").onclick = () => trustCA(deviceId, ip);
+            caTrustStatus.className = summary.ca_cert_trusted ? "status-success" : "status-error";
+            const trustCaBtn = document.getElementById("trust-ca-btn");
+            if (summary.ca_cert_trusted) {
+                trustCaBtn.classList.add("hidden");
+            } else {
+                trustCaBtn.classList.remove("hidden");
+                trustCaBtn.classList.add("visible");
+            }
+            trustCaBtn.onclick = () => trustCA(deviceId, ip);
         } else {
             remoteStatus.innerText = "❓ Unknown";
-            remoteStatus.style.color = "gray";
+            remoteStatus.className = "text-muted";
             remoteFound.innerText = "";
 
             const caTrustStatus = document.getElementById("ca-trust-status");
             caTrustStatus.innerText = "❓ Unknown";
-            caTrustStatus.style.color = "gray";
+            caTrustStatus.className = "text-muted";
         }
 
         const currentConfigElem = document.getElementById("current-config");
         currentConfigElem.innerText = summary.current_config;
-        currentConfigElem.style.color = summary.ssh_success ? "black" : "red";
+        currentConfigElem.className = summary.ssh_success ? "status-info" : "status-error";
 
         document.getElementById("planned-config").innerText = summary.planned_config;
         document.getElementById("planned-hosts").innerText = summary.planned_hosts || "";
@@ -1680,7 +1718,7 @@ async function showSummary(deviceId) {
         const testUrlElem = document.getElementById("test-url");
         testUrlElem.innerText = summary.server_https_url || "N/A";
         const testResultDiv = document.getElementById("test-result");
-        testResultDiv.style.display = "none";
+        testResultDiv.classList.add("hidden");
         testResultDiv.innerText = "";
 
         document.getElementById("test-connection-explicit-btn").onclick = () => testConnection(deviceId, true);
@@ -1697,12 +1735,16 @@ async function showSummary(deviceId) {
         const revertBtn = document.getElementById("revert-migrate-btn");
         revertBtn.onclick = () => revert(deviceId, ip);
         revertBtn.disabled = !summary.ssh_success;
-        revertBtn.style.display = summary.original_config ? "inline-block" : "none";
+        if (summary.original_config) {
+            revertBtn.classList.remove("hidden");
+            revertBtn.classList.add("visible");
+        } else {
+            revertBtn.classList.add("hidden");
+        }
 
         const rebootBtn = document.getElementById("reboot-speaker-btn");
         rebootBtn.onclick = () => reboot(deviceId, ip);
         rebootBtn.disabled = !summary.ssh_success;
-        rebootBtn.style.border = "none"; // Reset border if it was set during migration
 
         const remoteBtn = document.getElementById("ensure-remote-btn");
         remoteBtn.onclick = () => ensureRemoteServices(deviceId, ip);
@@ -1716,11 +1758,12 @@ async function showSummary(deviceId) {
         backupBtn.onclick = () => backupConfig(deviceId, ip);
         backupBtn.disabled = !summary.ssh_success || !!summary.original_config;
 
-        document.getElementById("migration-summary").style.display = "block";
-        document.getElementById("migration-summary").scrollIntoView();
+        // Finally, show the migration summary and scroll it into view
+        migrationSummary.classList.remove("hidden");
+        migrationSummary.classList.add("visible");
+        migrationSummary.scrollIntoView();
     } catch (error) {
-        statusDiv.style.backgroundColor = "#ffcccc";
-        statusDiv.innerHTML = "Error fetching summary for " + display + ": " + error;
+        showStatus("migration-fetch-status", "Error fetching summary for " + display + ": " + error, "error");
     }
 }
 
@@ -1735,10 +1778,11 @@ function showCommandOutput(result) {
     const outputBox = document.getElementById("command-output-box");
     const outputText = document.getElementById("command-output");
     if (outputBox && outputText && result.output) {
-        outputBox.style.display = "block";
+        outputBox.classList.remove("hidden");
+        outputBox.classList.add("visible");
         outputText.innerText = result.output;
     } else if (outputBox) {
-        outputBox.style.display = "none";
+        outputBox.classList.add("hidden");
     }
 }
 
@@ -1753,27 +1797,21 @@ async function revert(deviceId, ip) {
     }
 
     const summaryDiv = document.getElementById("migration-summary");
-    summaryDiv.style.display = "none";
+    summaryDiv.classList.add("hidden");
 
-    const statusDiv = document.getElementById("status");
-    statusDiv.style.display = "block";
-    statusDiv.style.backgroundColor = "#ffffcc";
-    statusDiv.innerHTML = "Reverting " + display + " to defaults...";
+    showStatus("status", "Reverting " + display + " to defaults...", "info");
 
     try {
         const response = await fetch("/setup/revert/" + encodeURIComponent(deviceId), {method: "POST"},);
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
-            statusDiv.style.backgroundColor = "#ccffcc";
-            statusDiv.innerHTML = "Successfully started revert for " + display + ".";
+            showStatus("status", "Successfully started revert for " + display + ".", "success");
         } else {
-            statusDiv.style.backgroundColor = "#ffcccc";
-            statusDiv.innerHTML = "Revert failed for " + display + ": " + (result.message || "Unknown error");
+            showStatus("status", "Revert failed for " + display + ": " + (result.message || "Unknown error"), "error");
         }
     } catch (error) {
-        statusDiv.style.backgroundColor = "#ffcccc";
-        statusDiv.innerHTML = "Error reverting " + display + ": " + error;
+        showStatus("status", "Error reverting " + display + ": " + error, "error");
     }
 }
 
@@ -1787,25 +1825,19 @@ async function reboot(deviceId, ip) {
         return;
     }
 
-    const statusDiv = document.getElementById("status");
-    statusDiv.style.display = "block";
-    statusDiv.style.backgroundColor = "#ffffcc";
-    statusDiv.innerHTML = "Rebooting " + display + "...";
+    showStatus("status", "Rebooting " + display + "...", "info");
 
     try {
         const response = await fetch("/setup/reboot/" + encodeURIComponent(deviceId), {method: "POST"},);
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
-            statusDiv.style.backgroundColor = "#ccffcc";
-            statusDiv.innerHTML = "Successfully started reboot for " + display + ".";
+            showStatus("status", "Successfully started reboot for " + display + ".", "success");
         } else {
-            statusDiv.style.backgroundColor = "#ffcccc";
-            statusDiv.innerHTML = "Reboot failed for " + display + ": " + (result.message || "Unknown error");
+            showStatus("status", "Reboot failed for " + display + ": " + (result.message || "Unknown error"), "error");
         }
     } catch (error) {
-        statusDiv.style.backgroundColor = "#ffcccc";
-        statusDiv.innerHTML = "Error rebooting " + display + ": " + error;
+        showStatus("status", "Error rebooting " + display + ": " + error, "error");
     }
 }
 
@@ -1825,13 +1857,10 @@ async function migrate(deviceId, ip) {
     };
 
     const summaryDiv = document.getElementById("migration-summary");
-    summaryDiv.style.display = "none";
+    summaryDiv.classList.add("hidden");
 
-    const statusDiv = document.getElementById("status");
-    statusDiv.style.display = "block";
-    statusDiv.style.backgroundColor = "#ffffcc";
     const display = getDeviceDisplayName(deviceId);
-    statusDiv.innerHTML = "Migrating " + display + " using " + method + "...";
+    showStatus("status", "Migrating " + display + " using " + method + "...", "info");
 
     let query = "?method=" + encodeURIComponent(method) + "&target_url=" + encodeURIComponent(targetUrl);
     for (let k in opts) {
@@ -1843,24 +1872,23 @@ async function migrate(deviceId, ip) {
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
-            statusDiv.style.backgroundColor = "#ccffcc";
-            statusDiv.innerHTML = "Successfully started migration for " + display + ". <strong>Please reboot the device to activate the changes.</strong>";
+            showStatus("status", "Successfully started migration for " + display + ". <strong>Please reboot the device to activate the changes.</strong>", "success");
 
             // Make reboot button available and prominent
             const rebootBtn = document.getElementById("reboot-speaker-btn");
-            rebootBtn.style.display = "inline-block";
+            rebootBtn.classList.remove("hidden");
+            rebootBtn.classList.add("visible");
             rebootBtn.disabled = false;
-            rebootBtn.style.border = "2px solid #000";
+            rebootBtn.classList.add("btn-primary"); // Assuming we have or want a primary look for this now
 
             // Re-show summary but with prominence on reboot
-            summaryDiv.style.display = "block";
+            summaryDiv.classList.remove("hidden");
+            summaryDiv.classList.add("visible");
         } else {
-            statusDiv.style.backgroundColor = "#ffcccc";
-            statusDiv.innerHTML = "Migration failed for " + display + ": " + (result.message || "Unknown error");
+            showStatus("status", "Migration failed for " + display + ": " + (result.message || "Unknown error"), "error");
         }
     } catch (error) {
-        statusDiv.style.backgroundColor = "#ffcccc";
-        statusDiv.innerHTML = "Error migrating " + display + ": " + error;
+        showStatus("status", "Error migrating " + display + ": " + error, "error");
     }
 }
 
@@ -1869,27 +1897,21 @@ async function trustCA(deviceId, ip) {
         alert("Please select a device.");
         return;
     }
-    const statusDiv = document.getElementById("status");
-    statusDiv.style.display = "block";
-    statusDiv.style.backgroundColor = "#ffffcc";
     const display = getDeviceDisplayName(deviceId);
-    statusDiv.innerHTML = "Injecting Root CA into shared trust store on " + display + "...";
+    showStatus("status", "Injecting Root CA into shared trust store on " + display + "...", "info");
 
     try {
         const response = await fetch("/setup/trust-ca/" + encodeURIComponent(deviceId), {method: "POST"},);
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
-            statusDiv.style.backgroundColor = "#ccffcc";
-            statusDiv.innerHTML = "Successfully injected Root CA on " + display + ".";
+            showStatus("status", "Successfully injected Root CA on " + display + ".", "success");
             showSummary(deviceId); // Refresh to update status
         } else {
-            statusDiv.style.backgroundColor = "#ffcccc";
-            statusDiv.innerHTML = "Failed to trust CA on " + display + ": " + (result.message || "Unknown error");
+            showStatus("status", "Failed to trust CA on " + display + ": " + (result.message || "Unknown error"), "error");
         }
     } catch (error) {
-        statusDiv.style.backgroundColor = "#ffcccc";
-        statusDiv.innerHTML = "Error trusting CA on " + display + ": " + error;
+        showStatus("status", "Error trusting CA on " + display + ": " + error, "error");
     }
 }
 
@@ -1899,28 +1921,22 @@ async function ensureRemoteServices(deviceId, ip) {
         return;
     }
     const summaryDiv = document.getElementById("migration-summary");
-    summaryDiv.style.display = "none";
+    summaryDiv.classList.add("hidden");
 
-    const statusDiv = document.getElementById("status");
-    statusDiv.style.display = "block";
-    statusDiv.style.backgroundColor = "#ffffcc";
     const display = getDeviceDisplayName(deviceId);
-    statusDiv.innerHTML = "Ensuring remote services for " + display + "...";
+    showStatus("status", "Ensuring remote services for " + display + "...", "info");
 
     try {
         const response = await fetch("/setup/ensure-remote-services/" + encodeURIComponent(deviceId), {method: "POST"},);
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
-            statusDiv.style.backgroundColor = "#ccffcc";
-            statusDiv.innerHTML = "Successfully ensured remote services for " + display + ".";
+            showStatus("status", "Successfully ensured remote services for " + display + ".", "success");
         } else {
-            statusDiv.style.backgroundColor = "#ffcccc";
-            statusDiv.innerHTML = "Failed to ensure remote services for " + display + ": " + (result.message || "Unknown error");
+            showStatus("status", "Failed to ensure remote services for " + display + ": " + (result.message || "Unknown error"), "error");
         }
     } catch (error) {
-        statusDiv.style.backgroundColor = "#ffcccc";
-        statusDiv.innerHTML = "Error ensuring remote services for " + display + ": " + error;
+        showStatus("status", "Error ensuring remote services for " + display + ": " + error, "error");
     }
 }
 
@@ -1934,27 +1950,21 @@ async function removeRemoteServices(deviceId, ip) {
         return;
     }
     const summaryDiv = document.getElementById("migration-summary");
-    summaryDiv.style.display = "none";
+    summaryDiv.classList.add("hidden");
 
-    const statusDiv = document.getElementById("status");
-    statusDiv.style.display = "block";
-    statusDiv.style.backgroundColor = "#ffffcc";
-    statusDiv.innerHTML = "Removing remote services for " + display + "...";
+    showStatus("status", "Removing remote services for " + display + "...", "info");
 
     try {
         const response = await fetch("/setup/remove-remote-services/" + encodeURIComponent(deviceId), {method: "POST"},);
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
-            statusDiv.style.backgroundColor = "#ccffcc";
-            statusDiv.innerHTML = "Successfully removed remote services from " + display + ".";
+            showStatus("status", "Successfully removed remote services from " + display + ".", "success");
         } else {
-            statusDiv.style.backgroundColor = "#ffcccc";
-            statusDiv.innerHTML = "Failed to remove remote services for " + display + ": " + (result.message || "Unknown error");
+            showStatus("status", "Failed to remove remote services for " + display + ": " + (result.message || "Unknown error"), "error");
         }
     } catch (error) {
-        statusDiv.style.backgroundColor = "#ffcccc";
-        statusDiv.innerHTML = "Error removing remote services for " + display + ": " + error;
+        showStatus("status", "Error removing remote services for " + display + ": " + error, "error");
     }
 }
 
@@ -1963,27 +1973,21 @@ async function backupConfig(deviceId, ip) {
         alert("Please select a device.");
         return;
     }
-    const statusDiv = document.getElementById("status");
-    statusDiv.style.display = "block";
-    statusDiv.style.backgroundColor = "#ffffcc";
     const display = getDeviceDisplayName(deviceId);
-    statusDiv.innerHTML = "Creating backup for " + display + "...";
+    showStatus("status", "Creating backup for " + display + "...", "info");
 
     try {
         const response = await fetch("/setup/backup/" + encodeURIComponent(deviceId), {method: "POST"},);
         const result = await response.json();
         showCommandOutput(result);
         if (result.ok) {
-            statusDiv.style.backgroundColor = "#ccffcc";
-            statusDiv.innerHTML = "Successfully created backup for " + display + ".";
+            showStatus("status", "Successfully created backup for " + display + ".", "success");
             showSummary(deviceId); // Refresh
         } else {
-            statusDiv.style.backgroundColor = "#ffcccc";
-            statusDiv.innerHTML = "Backup failed for " + display + ": " + (result.message || "Unknown error");
+            showStatus("status", "Backup failed for " + display + ": " + (result.message || "Unknown error"), "error");
         }
     } catch (error) {
-        statusDiv.style.backgroundColor = "#ffcccc";
-        statusDiv.innerHTML = "Error creating backup for " + display + ": " + error;
+        showStatus("status", "Error creating backup for " + display + ": " + error, "error");
     }
 }
 
@@ -1992,9 +1996,7 @@ async function testConnection(deviceId, useExplicitCA) {
     const testResultDiv = document.getElementById("test-result");
     const display = getDeviceDisplayName(deviceId);
 
-    testResultDiv.style.display = "block";
-    testResultDiv.style.backgroundColor = "#f0f0f0";
-    testResultDiv.style.color = "black";
+    testResultDiv.className = "status status-info visible";
     testResultDiv.innerText = "Running connection test from " + display + "...\n(This may take a few seconds)";
 
     try {
@@ -2003,14 +2005,14 @@ async function testConnection(deviceId, useExplicitCA) {
         const result = await response.json();
 
         if (result.ok) {
-            testResultDiv.style.backgroundColor = "#ccffcc";
+            testResultDiv.className = "status status-success visible";
             testResultDiv.innerText = "✅ " + result.message + "\n\nOutput:\n" + result.output;
         } else {
-            testResultDiv.style.backgroundColor = "#ffcccc";
+            testResultDiv.className = "status status-error visible";
             testResultDiv.innerText = "❌ Connection failed: " + result.message + "\n\nOutput:\n" + result.output;
         }
     } catch (error) {
-        testResultDiv.style.backgroundColor = "#ffcccc";
+        testResultDiv.className = "status status-error visible";
         testResultDiv.innerText = "❌ Error triggering test: " + error;
     }
 }
@@ -2020,9 +2022,7 @@ async function testHostsRedirection(deviceId) {
     const testResultDiv = document.getElementById("hosts-test-result");
     const display = getDeviceDisplayName(deviceId);
 
-    testResultDiv.style.display = "block";
-    testResultDiv.style.backgroundColor = "#f0f0f0";
-    testResultDiv.style.color = "black";
+    testResultDiv.className = "status status-info visible";
     testResultDiv.innerText = "Running hosts redirection test from " + display + "...\n(This may take a few seconds)";
 
     try {
@@ -2031,14 +2031,14 @@ async function testHostsRedirection(deviceId) {
         const result = await response.json();
 
         if (result.ok) {
-            testResultDiv.style.backgroundColor = "#ccffcc";
+            testResultDiv.className = "status status-success visible";
             testResultDiv.innerText = "✅ " + result.message + "\n\nOutput:\n" + result.output;
         } else {
-            testResultDiv.style.backgroundColor = "#ffcccc";
+            testResultDiv.className = "status status-error visible";
             testResultDiv.innerText = "❌ Test failed: " + result.message + "\n\nOutput:\n" + result.output;
         }
     } catch (error) {
-        testResultDiv.style.backgroundColor = "#ffcccc";
+        testResultDiv.className = "status status-error visible";
         testResultDiv.innerText = "❌ Error triggering test: " + error;
     }
 }
@@ -2048,9 +2048,8 @@ async function testDNSRedirection(deviceId) {
     const testResultDiv = document.getElementById("dns-test-result");
     const display = getDeviceDisplayName(deviceId);
 
-    testResultDiv.style.display = "block";
-    testResultDiv.style.backgroundColor = "#f0f0f0";
-    testResultDiv.style.color = "black";
+    testResultDiv.classList.add("visible");
+    testResultDiv.className = "status status-info visible";
     testResultDiv.innerText = "Running DNS redirection test from " + display + "...\n(This may take a few seconds)";
 
     try {
@@ -2059,21 +2058,23 @@ async function testDNSRedirection(deviceId) {
         const result = await response.json();
 
         if (result.ok) {
-            testResultDiv.style.backgroundColor = "#ccffcc";
+            testResultDiv.className = "status status-success visible";
             testResultDiv.innerText = "✅ " + result.message + "\n\nOutput:\n" + result.output;
         } else {
-            testResultDiv.style.backgroundColor = "#ffcccc";
+            testResultDiv.className = "status status-error visible";
             testResultDiv.innerText = "❌ Test failed: " + result.message + "\n\nOutput:\n" + result.output;
         }
     } catch (error) {
-        testResultDiv.style.backgroundColor = "#ffcccc";
+        testResultDiv.className = "status status-error visible";
         testResultDiv.innerText = "❌ Error triggering test: " + error;
     }
 }
 
 function toggleOriginalConfig() {
     const pane = document.getElementById("original-config-pane");
-    pane.style.display = pane.style.display === "none" ? "block" : "none";
+    if (pane) {
+        pane.classList.toggle("hidden");
+    }
 }
 
 async function toggleMigrationMethod() {
@@ -2090,24 +2091,28 @@ async function toggleMigrationMethod() {
     const dnsWarning = document.getElementById("dns-port-warning");
 
     if (method === "hosts") {
-        xmlDiffPane.style.display = "none";
-        plannedXmlPane.style.display = "none";
-        plannedHostsPane.style.display = "block";
-        plannedResolvPane.style.display = "none";
-        currentResolvPane.style.display = "none";
-        serviceOptions.style.display = "none";
-        hostsTestPane.style.display = "block";
-        dnsTestPane.style.display = "none";
-        if (dnsWarning) dnsWarning.style.display = "none";
+        xmlDiffPane.classList.add("hidden");
+        plannedXmlPane.classList.add("hidden");
+        plannedHostsPane.classList.remove("hidden");
+        plannedHostsPane.classList.add("visible");
+        plannedResolvPane.classList.add("hidden");
+        currentResolvPane.classList.add("hidden");
+        serviceOptions.classList.add("hidden");
+        hostsTestPane.classList.remove("hidden");
+        hostsTestPane.classList.add("visible");
+        dnsTestPane.classList.add("hidden");
+        if (dnsWarning) dnsWarning.classList.add("hidden");
     } else if (method === "resolv") {
-        xmlDiffPane.style.display = "none";
-        plannedXmlPane.style.display = "none";
-        plannedHostsPane.style.display = "none";
-        plannedResolvPane.style.display = "block";
-        currentResolvPane.style.display = "none";
-        serviceOptions.style.display = "none";
-        hostsTestPane.style.display = "none";
-        dnsTestPane.style.display = "block";
+        xmlDiffPane.classList.add("hidden");
+        plannedXmlPane.classList.add("hidden");
+        plannedHostsPane.classList.add("hidden");
+        plannedResolvPane.classList.remove("hidden");
+        plannedResolvPane.classList.add("visible");
+        currentResolvPane.classList.add("hidden");
+        serviceOptions.classList.add("hidden");
+        hostsTestPane.classList.add("hidden");
+        dnsTestPane.classList.remove("hidden");
+        dnsTestPane.classList.add("visible");
 
         const resolvNote = document.getElementById("resolv-note");
         if (resolvNote) {
@@ -2127,32 +2132,38 @@ async function toggleMigrationMethod() {
             if (dnsWarning) {
                 if (!isEnabled) {
                     dnsWarning.innerText = "⚠️ DNS Discovery is DISABLED in Settings. Migration will fail.";
-                    dnsWarning.style.display = "block";
+                    dnsWarning.classList.remove("hidden");
+                    dnsWarning.classList.add("visible");
                 } else if (!isPort53) {
                     dnsWarning.innerText = `⚠️ DNS Discovery is bound to ${dnsBind}, but port 53 is required for migration.`;
-                    dnsWarning.style.display = "block";
+                    dnsWarning.classList.remove("hidden");
+                    dnsWarning.classList.add("visible");
                 } else if (!isRunning) {
                     dnsWarning.innerText = `⚠️ DNS Discovery server is NOT RUNNING on ${dnsBind} (check for port conflicts/permissions). Migration will fail.`;
-                    dnsWarning.style.display = "block";
+                    dnsWarning.classList.remove("hidden");
+                    dnsWarning.classList.add("visible");
                 } else {
-                    dnsWarning.style.display = "none";
+                    dnsWarning.classList.add("hidden");
                 }
             }
         } catch (e) {
             console.error("Failed to check DNS settings", e);
         }
     } else {
-        xmlDiffPane.style.display = "block";
-        plannedXmlPane.style.display = "block";
-        plannedHostsPane.style.display = "none";
-        plannedResolvPane.style.display = "none";
-        currentResolvPane.style.display = "none";
-        hostsTestPane.style.display = "none";
-        dnsTestPane.style.display = "none";
+        xmlDiffPane.classList.remove("hidden");
+        xmlDiffPane.classList.add("visible");
+        plannedXmlPane.classList.remove("hidden");
+        plannedXmlPane.classList.add("visible");
+        plannedHostsPane.classList.add("hidden");
+        plannedResolvPane.classList.add("hidden");
+        currentResolvPane.classList.add("hidden");
+        hostsTestPane.classList.add("hidden");
+        dnsTestPane.classList.add("hidden");
         // Only show service options if we have a parsed config
         const currentConfig = document.getElementById("current-config").innerText;
         if (currentConfig && !currentConfig.startsWith("Error") && currentConfig !== "loading...") {
-            serviceOptions.style.display = "block";
+            serviceOptions.classList.remove("hidden");
+            serviceOptions.classList.add("visible");
         }
     }
 }
