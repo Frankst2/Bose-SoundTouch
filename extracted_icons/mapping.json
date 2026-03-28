@@ -1,0 +1,1577 @@
+{
+    "57600": {
+        "hex": "0xE100",
+        "glyph_name": "uniE100",
+        "file": "icon_E100.png",
+        "svg_file": "icon_E100.svg",
+        "semantic_name": ""
+    },
+    "57601": {
+        "hex": "0xE101",
+        "glyph_name": "uniE101",
+        "file": "icon_E101.png",
+        "svg_file": "icon_E101.svg",
+        "semantic_name": "PLAY"
+    },
+    "57602": {
+        "hex": "0xE102",
+        "glyph_name": "uniE102",
+        "file": "icon_E102.png",
+        "svg_file": "icon_E102.svg",
+        "semantic_name": ""
+    },
+    "57603": {
+        "hex": "0xE103",
+        "glyph_name": "uniE103",
+        "file": "icon_E103.png",
+        "svg_file": "icon_E103.svg",
+        "semantic_name": "PAUSE"
+    },
+    "57604": {
+        "hex": "0xE104",
+        "glyph_name": "uniE104",
+        "file": "icon_E104.png",
+        "svg_file": "icon_E104.svg",
+        "semantic_name": ""
+    },
+    "57605": {
+        "hex": "0xE105",
+        "glyph_name": "uniE105",
+        "file": "icon_E105.png",
+        "svg_file": "icon_E105.svg",
+        "semantic_name": ""
+    },
+    "57606": {
+        "hex": "0xE106",
+        "glyph_name": "uniE106",
+        "file": "icon_E106.png",
+        "svg_file": "icon_E106.svg",
+        "semantic_name": ""
+    },
+    "57607": {
+        "hex": "0xE107",
+        "glyph_name": "uniE107",
+        "file": "icon_E107.png",
+        "svg_file": "icon_E107.svg",
+        "semantic_name": "PREV_TRACK"
+    },
+    "57608": {
+        "hex": "0xE108",
+        "glyph_name": "uniE108",
+        "file": "icon_E108.png",
+        "svg_file": "icon_E108.svg",
+        "semantic_name": ""
+    },
+    "57609": {
+        "hex": "0xE109",
+        "glyph_name": "uniE109",
+        "file": "icon_E109.png",
+        "svg_file": "icon_E109.svg",
+        "semantic_name": ""
+    },
+    "57610": {
+        "hex": "0xE10A",
+        "glyph_name": "uniE10A",
+        "file": "icon_E10A.png",
+        "svg_file": "icon_E10A.svg",
+        "semantic_name": ""
+    },
+    "57611": {
+        "hex": "0xE10B",
+        "glyph_name": "uniE10B",
+        "file": "icon_E10B.png",
+        "svg_file": "icon_E10B.svg",
+        "semantic_name": ""
+    },
+    "57612": {
+        "hex": "0xE10C",
+        "glyph_name": "uniE10C",
+        "file": "icon_E10C.png",
+        "svg_file": "icon_E10C.svg",
+        "semantic_name": ""
+    },
+    "57613": {
+        "hex": "0xE10D",
+        "glyph_name": "uniE10D",
+        "file": "icon_E10D.png",
+        "svg_file": "icon_E10D.svg",
+        "semantic_name": "NEXT_TRACK"
+    },
+    "57614": {
+        "hex": "0xE10E",
+        "glyph_name": "uniE10E",
+        "file": "icon_E10E.png",
+        "svg_file": "icon_E10E.svg",
+        "semantic_name": ""
+    },
+    "57615": {
+        "hex": "0xE10F",
+        "glyph_name": "uniE10F",
+        "file": "icon_E10F.png",
+        "svg_file": "icon_E10F.svg",
+        "semantic_name": ""
+    },
+    "57616": {
+        "hex": "0xE110",
+        "glyph_name": "uniE110",
+        "file": "icon_E110.png",
+        "svg_file": "icon_E110.svg",
+        "semantic_name": ""
+    },
+    "57617": {
+        "hex": "0xE111",
+        "glyph_name": "uniE111",
+        "file": "icon_E111.png",
+        "svg_file": "icon_E111.svg",
+        "semantic_name": "STOP"
+    },
+    "57618": {
+        "hex": "0xE112",
+        "glyph_name": "uniE112",
+        "file": "icon_E112.png",
+        "svg_file": "icon_E112.svg",
+        "semantic_name": ""
+    },
+    "57619": {
+        "hex": "0xE113",
+        "glyph_name": "uniE113",
+        "file": "icon_E113.png",
+        "svg_file": "icon_E113.svg",
+        "semantic_name": ""
+    },
+    "57620": {
+        "hex": "0xE114",
+        "glyph_name": "uniE114",
+        "file": "icon_E114.png",
+        "svg_file": "icon_E114.svg",
+        "semantic_name": ""
+    },
+    "57621": {
+        "hex": "0xE115",
+        "glyph_name": "uniE115",
+        "file": "icon_E115.png",
+        "svg_file": "icon_E115.svg",
+        "semantic_name": ""
+    },
+    "57622": {
+        "hex": "0xE116",
+        "glyph_name": "uniE116",
+        "file": "icon_E116.png",
+        "svg_file": "icon_E116.svg",
+        "semantic_name": ""
+    },
+    "57623": {
+        "hex": "0xE117",
+        "glyph_name": "uniE117",
+        "file": "icon_E117.png",
+        "svg_file": "icon_E117.svg",
+        "semantic_name": ""
+    },
+    "57624": {
+        "hex": "0xE118",
+        "glyph_name": "uniE118",
+        "file": "icon_E118.png",
+        "svg_file": "icon_E118.svg",
+        "semantic_name": "VOLUME_ICON"
+    },
+    "57625": {
+        "hex": "0xE119",
+        "glyph_name": "uniE119",
+        "file": "icon_E119.png",
+        "svg_file": "icon_E119.svg",
+        "semantic_name": "ADD"
+    },
+    "57626": {
+        "hex": "0xE11A",
+        "glyph_name": "uniE11A",
+        "file": "icon_E11A.png",
+        "svg_file": "icon_E11A.svg",
+        "semantic_name": ""
+    },
+    "57627": {
+        "hex": "0xE11B",
+        "glyph_name": "uniE11B",
+        "file": "icon_E11B.png",
+        "svg_file": "icon_E11B.svg",
+        "semantic_name": "REPEAT_ONE"
+    },
+    "57628": {
+        "hex": "0xE11C",
+        "glyph_name": "uniE11C",
+        "file": "icon_E11C.png",
+        "svg_file": "icon_E11C.svg",
+        "semantic_name": "REPEAT_ALL"
+    },
+    "57629": {
+        "hex": "0xE11D",
+        "glyph_name": "uniE11D",
+        "file": "icon_E11D.png",
+        "svg_file": "icon_E11D.svg",
+        "semantic_name": "SHUFFLE"
+    },
+    "57630": {
+        "hex": "0xE11E",
+        "glyph_name": "uniE11E",
+        "file": "icon_E11E.png",
+        "svg_file": "icon_E11E.svg",
+        "semantic_name": "ARROW_UP"
+    },
+    "57631": {
+        "hex": "0xE11F",
+        "glyph_name": "uniE11F",
+        "file": "icon_E11F.png",
+        "svg_file": "icon_E11F.svg",
+        "semantic_name": "ARROW_DOWN"
+    },
+    "57632": {
+        "hex": "0xE120",
+        "glyph_name": "uniE120",
+        "file": "icon_E120.png",
+        "svg_file": "icon_E120.svg",
+        "semantic_name": "BACK / ARROW_LEFT"
+    },
+    "57633": {
+        "hex": "0xE121",
+        "glyph_name": "uniE121",
+        "file": "icon_E121.png",
+        "svg_file": "icon_E121.svg",
+        "semantic_name": "FORWARD / ARROW_RIGHT"
+    },
+    "57634": {
+        "hex": "0xE122",
+        "glyph_name": "uniE122",
+        "file": "icon_E122.png",
+        "svg_file": "icon_E122.svg",
+        "semantic_name": ""
+    },
+    "57635": {
+        "hex": "0xE123",
+        "glyph_name": "uniE123",
+        "file": "icon_E123.png",
+        "svg_file": "icon_E123.svg",
+        "semantic_name": ""
+    },
+    "57636": {
+        "hex": "0xE124",
+        "glyph_name": "uniE124",
+        "file": "icon_E124.png",
+        "svg_file": "icon_E124.svg",
+        "semantic_name": "REMOVE"
+    },
+    "57637": {
+        "hex": "0xE125",
+        "glyph_name": "uniE125",
+        "file": "icon_E125.png",
+        "svg_file": "icon_E125.svg",
+        "semantic_name": ""
+    },
+    "57638": {
+        "hex": "0xE126",
+        "glyph_name": "uniE126",
+        "file": "icon_E126.png",
+        "svg_file": "icon_E126.svg",
+        "semantic_name": ""
+    },
+    "57639": {
+        "hex": "0xE127",
+        "glyph_name": "uniE127",
+        "file": "icon_E127.png",
+        "svg_file": "icon_E127.svg",
+        "semantic_name": ""
+    },
+    "57640": {
+        "hex": "0xE128",
+        "glyph_name": "uniE128",
+        "file": "icon_E128.png",
+        "svg_file": "icon_E128.svg",
+        "semantic_name": ""
+    },
+    "57641": {
+        "hex": "0xE129",
+        "glyph_name": "uniE129",
+        "file": "icon_E129.png",
+        "svg_file": "icon_E129.svg",
+        "semantic_name": ""
+    },
+    "57642": {
+        "hex": "0xE12A",
+        "glyph_name": "uniE12A",
+        "file": "icon_E12A.png",
+        "svg_file": "icon_E12A.svg",
+        "semantic_name": ""
+    },
+    "57643": {
+        "hex": "0xE12B",
+        "glyph_name": "uniE12B",
+        "file": "icon_E12B.png",
+        "svg_file": "icon_E12B.svg",
+        "semantic_name": ""
+    },
+    "57644": {
+        "hex": "0xE12C",
+        "glyph_name": "uniE12C",
+        "file": "icon_E12C.png",
+        "svg_file": "icon_E12C.svg",
+        "semantic_name": ""
+    },
+    "57645": {
+        "hex": "0xE12D",
+        "glyph_name": "uniE12D",
+        "file": "icon_E12D.png",
+        "svg_file": "icon_E12D.svg",
+        "semantic_name": "HDMI_2"
+    },
+    "57646": {
+        "hex": "0xE12E",
+        "glyph_name": "uniE12E",
+        "file": "icon_E12E.png",
+        "svg_file": "icon_E12E.svg",
+        "semantic_name": "HDMI_3"
+    },
+    "57647": {
+        "hex": "0xE12F",
+        "glyph_name": "uniE12F",
+        "file": "icon_E12F.png",
+        "svg_file": "icon_E12F.svg",
+        "semantic_name": ""
+    },
+    "57648": {
+        "hex": "0xE130",
+        "glyph_name": "uniE130",
+        "file": "icon_E130.png",
+        "svg_file": "icon_E130.svg",
+        "semantic_name": ""
+    },
+    "57649": {
+        "hex": "0xE131",
+        "glyph_name": "uniE131",
+        "file": "icon_E131.png",
+        "svg_file": "icon_E131.svg",
+        "semantic_name": ""
+    },
+    "57650": {
+        "hex": "0xE132",
+        "glyph_name": "uniE132",
+        "file": "icon_E132.png",
+        "svg_file": "icon_E132.svg",
+        "semantic_name": ""
+    },
+    "57651": {
+        "hex": "0xE133",
+        "glyph_name": "uniE133",
+        "file": "icon_E133.png",
+        "svg_file": "icon_E133.svg",
+        "semantic_name": ""
+    },
+    "57652": {
+        "hex": "0xE134",
+        "glyph_name": "uniE134",
+        "file": "icon_E134.png",
+        "svg_file": "icon_E134.svg",
+        "semantic_name": ""
+    },
+    "57653": {
+        "hex": "0xE135",
+        "glyph_name": "uniE135",
+        "file": "icon_E135.png",
+        "svg_file": "icon_E135.svg",
+        "semantic_name": ""
+    },
+    "57654": {
+        "hex": "0xE136",
+        "glyph_name": "uniE136",
+        "file": "icon_E136.png",
+        "svg_file": "icon_E136.svg",
+        "semantic_name": ""
+    },
+    "57655": {
+        "hex": "0xE137",
+        "glyph_name": "uniE137",
+        "file": "icon_E137.png",
+        "svg_file": "icon_E137.svg",
+        "semantic_name": ""
+    },
+    "57656": {
+        "hex": "0xE138",
+        "glyph_name": "uniE138",
+        "file": "icon_E138.png",
+        "svg_file": "icon_E138.svg",
+        "semantic_name": ""
+    },
+    "57657": {
+        "hex": "0xE139",
+        "glyph_name": "uniE139",
+        "file": "icon_E139.png",
+        "svg_file": "icon_E139.svg",
+        "semantic_name": ""
+    },
+    "57658": {
+        "hex": "0xE13A",
+        "glyph_name": "uniE13A",
+        "file": "icon_E13A.png",
+        "svg_file": "icon_E13A.svg",
+        "semantic_name": ""
+    },
+    "57659": {
+        "hex": "0xE13B",
+        "glyph_name": "uniE13B",
+        "file": "icon_E13B.png",
+        "svg_file": "icon_E13B.svg",
+        "semantic_name": ""
+    },
+    "57660": {
+        "hex": "0xE13C",
+        "glyph_name": "uniE13C",
+        "file": "icon_E13C.png",
+        "svg_file": "icon_E13C.svg",
+        "semantic_name": ""
+    },
+    "57661": {
+        "hex": "0xE13D",
+        "glyph_name": "uniE13D",
+        "file": "icon_E13D.png",
+        "svg_file": "icon_E13D.svg",
+        "semantic_name": "AIRPLAY"
+    },
+    "57662": {
+        "hex": "0xE13E",
+        "glyph_name": "uniE13E",
+        "file": "icon_E13E.png",
+        "svg_file": "icon_E13E.svg",
+        "semantic_name": ""
+    },
+    "57663": {
+        "hex": "0xE13F",
+        "glyph_name": "uniE13F",
+        "file": "icon_E13F.png",
+        "svg_file": "icon_E13F.svg",
+        "semantic_name": ""
+    },
+    "57664": {
+        "hex": "0xE140",
+        "glyph_name": "uniE140",
+        "file": "icon_E140.png",
+        "svg_file": "icon_E140.svg",
+        "semantic_name": ""
+    },
+    "57665": {
+        "hex": "0xE141",
+        "glyph_name": "uniE141",
+        "file": "icon_E141.png",
+        "svg_file": "icon_E141.svg",
+        "semantic_name": ""
+    },
+    "57666": {
+        "hex": "0xE142",
+        "glyph_name": "uniE142",
+        "file": "icon_E142.png",
+        "svg_file": "icon_E142.svg",
+        "semantic_name": ""
+    },
+    "57667": {
+        "hex": "0xE143",
+        "glyph_name": "uniE143",
+        "file": "icon_E143.png",
+        "svg_file": "icon_E143.svg",
+        "semantic_name": ""
+    },
+    "57668": {
+        "hex": "0xE144",
+        "glyph_name": "uniE144",
+        "file": "icon_E144.png",
+        "svg_file": "icon_E144.svg",
+        "semantic_name": ""
+    },
+    "57669": {
+        "hex": "0xE145",
+        "glyph_name": "uniE145",
+        "file": "icon_E145.png",
+        "svg_file": "icon_E145.svg",
+        "semantic_name": ""
+    },
+    "57670": {
+        "hex": "0xE146",
+        "glyph_name": "uniE146",
+        "file": "icon_E146.png",
+        "svg_file": "icon_E146.svg",
+        "semantic_name": ""
+    },
+    "57671": {
+        "hex": "0xE147",
+        "glyph_name": "uniE147",
+        "file": "icon_E147.png",
+        "svg_file": "icon_E147.svg",
+        "semantic_name": ""
+    },
+    "57672": {
+        "hex": "0xE148",
+        "glyph_name": "uniE148",
+        "file": "icon_E148.png",
+        "svg_file": "icon_E148.svg",
+        "semantic_name": ""
+    },
+    "57673": {
+        "hex": "0xE149",
+        "glyph_name": "uniE149",
+        "file": "icon_E149.png",
+        "svg_file": "icon_E149.svg",
+        "semantic_name": ""
+    },
+    "57674": {
+        "hex": "0xE14A",
+        "glyph_name": "uniE14A",
+        "file": "icon_E14A.png",
+        "svg_file": "icon_E14A.svg",
+        "semantic_name": ""
+    },
+    "57675": {
+        "hex": "0xE14B",
+        "glyph_name": "uniE14B",
+        "file": "icon_E14B.png",
+        "svg_file": "icon_E14B.svg",
+        "semantic_name": ""
+    },
+    "57676": {
+        "hex": "0xE14C",
+        "glyph_name": "uniE14C",
+        "file": "icon_E14C.png",
+        "svg_file": "icon_E14C.svg",
+        "semantic_name": ""
+    },
+    "57677": {
+        "hex": "0xE14D",
+        "glyph_name": "uniE14D",
+        "file": "icon_E14D.png",
+        "svg_file": "icon_E14D.svg",
+        "semantic_name": ""
+    },
+    "57678": {
+        "hex": "0xE14E",
+        "glyph_name": "uniE14E",
+        "file": "icon_E14E.png",
+        "svg_file": "icon_E14E.svg",
+        "semantic_name": ""
+    },
+    "57679": {
+        "hex": "0xE14F",
+        "glyph_name": "uniE14F",
+        "file": "icon_E14F.png",
+        "svg_file": "icon_E14F.svg",
+        "semantic_name": ""
+    },
+    "57680": {
+        "hex": "0xE150",
+        "glyph_name": "uniE150",
+        "file": "icon_E150.png",
+        "svg_file": "icon_E150.svg",
+        "semantic_name": ""
+    },
+    "57681": {
+        "hex": "0xE151",
+        "glyph_name": "uniE151",
+        "file": "icon_E151.png",
+        "svg_file": "icon_E151.svg",
+        "semantic_name": ""
+    },
+    "57682": {
+        "hex": "0xE152",
+        "glyph_name": "uniE152",
+        "file": "icon_E152.png",
+        "svg_file": "icon_E152.svg",
+        "semantic_name": ""
+    },
+    "57683": {
+        "hex": "0xE153",
+        "glyph_name": "uniE153",
+        "file": "icon_E153.png",
+        "svg_file": "icon_E153.svg",
+        "semantic_name": "STARTRADIO"
+    },
+    "57684": {
+        "hex": "0xE154",
+        "glyph_name": "uniE154",
+        "file": "icon_E154.png",
+        "svg_file": "icon_E154.svg",
+        "semantic_name": ""
+    },
+    "57685": {
+        "hex": "0xE155",
+        "glyph_name": "uniE155",
+        "file": "icon_E155.png",
+        "svg_file": "icon_E155.svg",
+        "semantic_name": "PRESET_ADD"
+    },
+    "57686": {
+        "hex": "0xE156",
+        "glyph_name": "uniE156",
+        "file": "icon_E156.png",
+        "svg_file": "icon_E156.svg",
+        "semantic_name": ""
+    },
+    "57687": {
+        "hex": "0xE157",
+        "glyph_name": "uniE157",
+        "file": "icon_E157.png",
+        "svg_file": "icon_E157.svg",
+        "semantic_name": ""
+    },
+    "57688": {
+        "hex": "0xE158",
+        "glyph_name": "uniE158",
+        "file": "icon_E158.png",
+        "svg_file": "icon_E158.svg",
+        "semantic_name": ""
+    },
+    "57689": {
+        "hex": "0xE159",
+        "glyph_name": "uniE159",
+        "file": "icon_E159.png",
+        "svg_file": "icon_E159.svg",
+        "semantic_name": ""
+    },
+    "57690": {
+        "hex": "0xE15A",
+        "glyph_name": "uniE15A",
+        "file": "icon_E15A.png",
+        "svg_file": "icon_E15A.svg",
+        "semantic_name": ""
+    },
+    "57691": {
+        "hex": "0xE15B",
+        "glyph_name": "uniE15B",
+        "file": "icon_E15B.png",
+        "svg_file": "icon_E15B.svg",
+        "semantic_name": ""
+    },
+    "57692": {
+        "hex": "0xE15C",
+        "glyph_name": "uniE15C",
+        "file": "icon_E15C.png",
+        "svg_file": "icon_E15C.svg",
+        "semantic_name": ""
+    },
+    "57693": {
+        "hex": "0xE15D",
+        "glyph_name": "uniE15D",
+        "file": "icon_E15D.png",
+        "svg_file": "icon_E15D.svg",
+        "semantic_name": ""
+    },
+    "57694": {
+        "hex": "0xE15E",
+        "glyph_name": "uniE15E",
+        "file": "icon_E15E.png",
+        "svg_file": "icon_E15E.svg",
+        "semantic_name": ""
+    },
+    "57695": {
+        "hex": "0xE15F",
+        "glyph_name": "uniE15F",
+        "file": "icon_E15F.png",
+        "svg_file": "icon_E15F.svg",
+        "semantic_name": ""
+    },
+    "57696": {
+        "hex": "0xE160",
+        "glyph_name": "uniE160",
+        "file": "icon_E160.png",
+        "svg_file": "icon_E160.svg",
+        "semantic_name": ""
+    },
+    "57697": {
+        "hex": "0xE161",
+        "glyph_name": "uniE161",
+        "file": "icon_E161.png",
+        "svg_file": "icon_E161.svg",
+        "semantic_name": ""
+    },
+    "57698": {
+        "hex": "0xE162",
+        "glyph_name": "uniE162",
+        "file": "icon_E162.png",
+        "svg_file": "icon_E162.svg",
+        "semantic_name": ""
+    },
+    "57699": {
+        "hex": "0xE163",
+        "glyph_name": "uniE163",
+        "file": "icon_E163.png",
+        "svg_file": "icon_E163.svg",
+        "semantic_name": "CLOSE"
+    },
+    "57700": {
+        "hex": "0xE164",
+        "glyph_name": "uniE164",
+        "file": "icon_E164.png",
+        "svg_file": "icon_E164.svg",
+        "semantic_name": ""
+    },
+    "57701": {
+        "hex": "0xE165",
+        "glyph_name": "uniE165",
+        "file": "icon_E165.png",
+        "svg_file": "icon_E165.svg",
+        "semantic_name": ""
+    },
+    "57702": {
+        "hex": "0xE166",
+        "glyph_name": "uniE166",
+        "file": "icon_E166.png",
+        "svg_file": "icon_E166.svg",
+        "semantic_name": ""
+    },
+    "57703": {
+        "hex": "0xE167",
+        "glyph_name": "uniE167",
+        "file": "icon_E167.png",
+        "svg_file": "icon_E167.svg",
+        "semantic_name": ""
+    },
+    "57704": {
+        "hex": "0xE168",
+        "glyph_name": "uniE168",
+        "file": "icon_E168.png",
+        "svg_file": "icon_E168.svg",
+        "semantic_name": "UPDATE_AVAIL"
+    },
+    "57705": {
+        "hex": "0xE169",
+        "glyph_name": "uniE169",
+        "file": "icon_E169.png",
+        "svg_file": "icon_E169.svg",
+        "semantic_name": ""
+    },
+    "57706": {
+        "hex": "0xE16A",
+        "glyph_name": "uniE16A",
+        "file": "icon_E16A.png",
+        "svg_file": "icon_E16A.svg",
+        "semantic_name": ""
+    },
+    "57707": {
+        "hex": "0xE16B",
+        "glyph_name": "uniE16B",
+        "file": "icon_E16B.png",
+        "svg_file": "icon_E16B.svg",
+        "semantic_name": ""
+    },
+    "57708": {
+        "hex": "0xE16C",
+        "glyph_name": "uniE16C",
+        "file": "icon_E16C.png",
+        "svg_file": "icon_E16C.svg",
+        "semantic_name": ""
+    },
+    "57709": {
+        "hex": "0xE16D",
+        "glyph_name": "uniE16D",
+        "file": "icon_E16D.png",
+        "svg_file": "icon_E16D.svg",
+        "semantic_name": ""
+    },
+    "57710": {
+        "hex": "0xE16E",
+        "glyph_name": "uniE16E",
+        "file": "icon_E16E.png",
+        "svg_file": "icon_E16E.svg",
+        "semantic_name": ""
+    },
+    "57711": {
+        "hex": "0xE16F",
+        "glyph_name": "uniE16F",
+        "file": "icon_E16F.png",
+        "svg_file": "icon_E16F.svg",
+        "semantic_name": "ERROR / WARNING"
+    },
+    "57712": {
+        "hex": "0xE170",
+        "glyph_name": "uniE170",
+        "file": "icon_E170.png",
+        "svg_file": "icon_E170.svg",
+        "semantic_name": ""
+    },
+    "57713": {
+        "hex": "0xE171",
+        "glyph_name": "uniE171",
+        "file": "icon_E171.png",
+        "svg_file": "icon_E171.svg",
+        "semantic_name": ""
+    },
+    "57714": {
+        "hex": "0xE172",
+        "glyph_name": "uniE172",
+        "file": "icon_E172.png",
+        "svg_file": "icon_E172.svg",
+        "semantic_name": ""
+    },
+    "57715": {
+        "hex": "0xE173",
+        "glyph_name": "uniE173",
+        "file": "icon_E173.png",
+        "svg_file": "icon_E173.svg",
+        "semantic_name": "SOUNDTOUCH_LOGO"
+    },
+    "57716": {
+        "hex": "0xE174",
+        "glyph_name": "uniE174",
+        "file": "icon_E174.png",
+        "svg_file": "icon_E174.svg",
+        "semantic_name": ""
+    },
+    "57717": {
+        "hex": "0xE175",
+        "glyph_name": "uniE175",
+        "file": "icon_E175.png",
+        "svg_file": "icon_E175.svg",
+        "semantic_name": ""
+    },
+    "57718": {
+        "hex": "0xE176",
+        "glyph_name": "uniE176",
+        "file": "icon_E176.png",
+        "svg_file": "icon_E176.svg",
+        "semantic_name": ""
+    },
+    "57719": {
+        "hex": "0xE177",
+        "glyph_name": "uniE177",
+        "file": "icon_E177.png",
+        "svg_file": "icon_E177.svg",
+        "semantic_name": ""
+    },
+    "57720": {
+        "hex": "0xE178",
+        "glyph_name": "uniE178",
+        "file": "icon_E178.png",
+        "svg_file": "icon_E178.svg",
+        "semantic_name": ""
+    },
+    "57721": {
+        "hex": "0xE179",
+        "glyph_name": "uniE179",
+        "file": "icon_E179.png",
+        "svg_file": "icon_E179.svg",
+        "semantic_name": ""
+    },
+    "57722": {
+        "hex": "0xE17A",
+        "glyph_name": "uniE17A",
+        "file": "icon_E17A.png",
+        "svg_file": "icon_E17A.svg",
+        "semantic_name": ""
+    },
+    "57723": {
+        "hex": "0xE17B",
+        "glyph_name": "uniE17B",
+        "file": "icon_E17B.png",
+        "svg_file": "icon_E17B.svg",
+        "semantic_name": ""
+    },
+    "57724": {
+        "hex": "0xE17C",
+        "glyph_name": "uniE17C",
+        "file": "icon_E17C.png",
+        "svg_file": "icon_E17C.svg",
+        "semantic_name": ""
+    },
+    "57725": {
+        "hex": "0xE17D",
+        "glyph_name": "uniE17D",
+        "file": "icon_E17D.png",
+        "svg_file": "icon_E17D.svg",
+        "semantic_name": ""
+    },
+    "57726": {
+        "hex": "0xE17E",
+        "glyph_name": "uniE17E",
+        "file": "icon_E17E.png",
+        "svg_file": "icon_E17E.svg",
+        "semantic_name": "POWER"
+    },
+    "57727": {
+        "hex": "0xE17F",
+        "glyph_name": "uniE17F",
+        "file": "icon_E17F.png",
+        "svg_file": "icon_E17F.svg",
+        "semantic_name": ""
+    },
+    "57728": {
+        "hex": "0xE180",
+        "glyph_name": "uniE180",
+        "file": "icon_E180.png",
+        "svg_file": "icon_E180.svg",
+        "semantic_name": ""
+    },
+    "57729": {
+        "hex": "0xE181",
+        "glyph_name": "uniE181",
+        "file": "icon_E181.png",
+        "svg_file": "icon_E181.svg",
+        "semantic_name": ""
+    },
+    "57730": {
+        "hex": "0xE182",
+        "glyph_name": "uniE182",
+        "file": "icon_E182.png",
+        "svg_file": "icon_E182.svg",
+        "semantic_name": ""
+    },
+    "57731": {
+        "hex": "0xE183",
+        "glyph_name": "uniE183",
+        "file": "icon_E183.png",
+        "svg_file": "icon_E183.svg",
+        "semantic_name": ""
+    },
+    "57732": {
+        "hex": "0xE184",
+        "glyph_name": "uniE184",
+        "file": "icon_E184.png",
+        "svg_file": "icon_E184.svg",
+        "semantic_name": ""
+    },
+    "57733": {
+        "hex": "0xE185",
+        "glyph_name": "uniE185",
+        "file": "icon_E185.png",
+        "svg_file": "icon_E185.svg",
+        "semantic_name": ""
+    },
+    "57734": {
+        "hex": "0xE186",
+        "glyph_name": "uniE186",
+        "file": "icon_E186.png",
+        "svg_file": "icon_E186.svg",
+        "semantic_name": ""
+    },
+    "57735": {
+        "hex": "0xE187",
+        "glyph_name": "uniE187",
+        "file": "icon_E187.png",
+        "svg_file": "icon_E187.svg",
+        "semantic_name": ""
+    },
+    "57736": {
+        "hex": "0xE188",
+        "glyph_name": "uniE188",
+        "file": "icon_E188.png",
+        "svg_file": "icon_E188.svg",
+        "semantic_name": ""
+    },
+    "57737": {
+        "hex": "0xE189",
+        "glyph_name": "uniE189",
+        "file": "icon_E189.png",
+        "svg_file": "icon_E189.svg",
+        "semantic_name": ""
+    },
+    "57738": {
+        "hex": "0xE18A",
+        "glyph_name": "uniE18A",
+        "file": "icon_E18A.png",
+        "svg_file": "icon_E18A.svg",
+        "semantic_name": ""
+    },
+    "57739": {
+        "hex": "0xE18B",
+        "glyph_name": "uniE18B",
+        "file": "icon_E18B.png",
+        "svg_file": "icon_E18B.svg",
+        "semantic_name": ""
+    },
+    "57740": {
+        "hex": "0xE18C",
+        "glyph_name": "uniE18C",
+        "file": "icon_E18C.png",
+        "svg_file": "icon_E18C.svg",
+        "semantic_name": ""
+    },
+    "57741": {
+        "hex": "0xE18D",
+        "glyph_name": "uniE18D",
+        "file": "icon_E18D.png",
+        "svg_file": "icon_E18D.svg",
+        "semantic_name": ""
+    },
+    "57742": {
+        "hex": "0xE18E",
+        "glyph_name": "uniE18E",
+        "file": "icon_E18E.png",
+        "svg_file": "icon_E18E.svg",
+        "semantic_name": "MORE_INFO"
+    },
+    "57743": {
+        "hex": "0xE18F",
+        "glyph_name": "uniE18F",
+        "file": "icon_E18F.png",
+        "svg_file": "icon_E18F.svg",
+        "semantic_name": "DATE_SORT"
+    },
+    "57744": {
+        "hex": "0xE190",
+        "glyph_name": "uniE190",
+        "file": "icon_E190.png",
+        "svg_file": "icon_E190.svg",
+        "semantic_name": ""
+    },
+    "57745": {
+        "hex": "0xE191",
+        "glyph_name": "uniE191",
+        "file": "icon_E191.png",
+        "svg_file": "icon_E191.svg",
+        "semantic_name": ""
+    },
+    "57746": {
+        "hex": "0xE192",
+        "glyph_name": "uniE192",
+        "file": "icon_E192.png",
+        "svg_file": "icon_E192.svg",
+        "semantic_name": "PRESETS"
+    },
+    "57747": {
+        "hex": "0xE193",
+        "glyph_name": "uniE193",
+        "file": "icon_E193.png",
+        "svg_file": "icon_E193.svg",
+        "semantic_name": ""
+    },
+    "57748": {
+        "hex": "0xE194",
+        "glyph_name": "uniE194",
+        "file": "icon_E194.png",
+        "svg_file": "icon_E194.svg",
+        "semantic_name": ""
+    },
+    "57749": {
+        "hex": "0xE195",
+        "glyph_name": "uniE195",
+        "file": "icon_E195.png",
+        "svg_file": "icon_E195.svg",
+        "semantic_name": ""
+    },
+    "57750": {
+        "hex": "0xE196",
+        "glyph_name": "uniE196",
+        "file": "icon_E196.png",
+        "svg_file": "icon_E196.svg",
+        "semantic_name": ""
+    },
+    "57751": {
+        "hex": "0xE197",
+        "glyph_name": "uniE197",
+        "file": "icon_E197.png",
+        "svg_file": "icon_E197.svg",
+        "semantic_name": ""
+    },
+    "57752": {
+        "hex": "0xE198",
+        "glyph_name": "uniE198",
+        "file": "icon_E198.png",
+        "svg_file": "icon_E198.svg",
+        "semantic_name": "SETTINGS"
+    },
+    "57753": {
+        "hex": "0xE199",
+        "glyph_name": "uniE199",
+        "file": "icon_E199.png",
+        "svg_file": "icon_E199.svg",
+        "semantic_name": "HAMBURGER"
+    },
+    "57754": {
+        "hex": "0xE19A",
+        "glyph_name": "uniE19A",
+        "file": "icon_E19A.png",
+        "svg_file": "icon_E19A.svg",
+        "semantic_name": ""
+    },
+    "57755": {
+        "hex": "0xE19B",
+        "glyph_name": "uniE19B",
+        "file": "icon_E19B.png",
+        "svg_file": "icon_E19B.svg",
+        "semantic_name": "AUX / HDMI_1"
+    },
+    "57756": {
+        "hex": "0xE19C",
+        "glyph_name": "uniE19C",
+        "file": "icon_E19C.png",
+        "svg_file": "icon_E19C.svg",
+        "semantic_name": ""
+    },
+    "57757": {
+        "hex": "0xE19D",
+        "glyph_name": "uniE19D",
+        "file": "icon_E19D.png",
+        "svg_file": "icon_E19D.svg",
+        "semantic_name": ""
+    },
+    "57758": {
+        "hex": "0xE19E",
+        "glyph_name": "uniE19E",
+        "file": "icon_E19E.png",
+        "svg_file": "icon_E19E.svg",
+        "semantic_name": "DELETE_STATION"
+    },
+    "57759": {
+        "hex": "0xE19F",
+        "glyph_name": "uniE19F",
+        "file": "icon_E19F.png",
+        "svg_file": "icon_E19F.svg",
+        "semantic_name": "BLUETOOTH"
+    },
+    "57760": {
+        "hex": "0xE1A0",
+        "glyph_name": "uniE1A0",
+        "file": "icon_E1A0.png",
+        "svg_file": "icon_E1A0.svg",
+        "semantic_name": ""
+    },
+    "57761": {
+        "hex": "0xE1A1",
+        "glyph_name": "uniE1A1",
+        "file": "icon_E1A1.png",
+        "svg_file": "icon_E1A1.svg",
+        "semantic_name": ""
+    },
+    "57762": {
+        "hex": "0xE1A2",
+        "glyph_name": "uniE1A2",
+        "file": "icon_E1A2.png",
+        "svg_file": "icon_E1A2.svg",
+        "semantic_name": ""
+    },
+    "57763": {
+        "hex": "0xE1A3",
+        "glyph_name": "uniE1A3",
+        "file": "icon_E1A3.png",
+        "svg_file": "icon_E1A3.svg",
+        "semantic_name": ""
+    },
+    "57764": {
+        "hex": "0xE1A4",
+        "glyph_name": "uniE1A4",
+        "file": "icon_E1A4.png",
+        "svg_file": "icon_E1A4.svg",
+        "semantic_name": ""
+    },
+    "57765": {
+        "hex": "0xE1A5",
+        "glyph_name": "uniE1A5",
+        "file": "icon_E1A5.png",
+        "svg_file": "icon_E1A5.svg",
+        "semantic_name": ""
+    },
+    "57766": {
+        "hex": "0xE1A6",
+        "glyph_name": "uniE1A6",
+        "file": "icon_E1A6.png",
+        "svg_file": "icon_E1A6.svg",
+        "semantic_name": ""
+    },
+    "57767": {
+        "hex": "0xE1A7",
+        "glyph_name": "uniE1A7",
+        "file": "icon_E1A7.png",
+        "svg_file": "icon_E1A7.svg",
+        "semantic_name": ""
+    },
+    "57768": {
+        "hex": "0xE1A8",
+        "glyph_name": "uniE1A8",
+        "file": "icon_E1A8.png",
+        "svg_file": "icon_E1A8.svg",
+        "semantic_name": ""
+    },
+    "57769": {
+        "hex": "0xE1A9",
+        "glyph_name": "uniE1A9",
+        "file": "icon_E1A9.png",
+        "svg_file": "icon_E1A9.svg",
+        "semantic_name": ""
+    },
+    "57770": {
+        "hex": "0xE1AA",
+        "glyph_name": "uniE1AA",
+        "file": "icon_E1AA.png",
+        "svg_file": "icon_E1AA.svg",
+        "semantic_name": ""
+    },
+    "57771": {
+        "hex": "0xE1AB",
+        "glyph_name": "uniE1AB",
+        "file": "icon_E1AB.png",
+        "svg_file": "icon_E1AB.svg",
+        "semantic_name": ""
+    },
+    "57772": {
+        "hex": "0xE1AC",
+        "glyph_name": "uniE1AC",
+        "file": "icon_E1AC.png",
+        "svg_file": "icon_E1AC.svg",
+        "semantic_name": ""
+    },
+    "57773": {
+        "hex": "0xE1AD",
+        "glyph_name": "uniE1AD",
+        "file": "icon_E1AD.png",
+        "svg_file": "icon_E1AD.svg",
+        "semantic_name": ""
+    },
+    "57774": {
+        "hex": "0xE1AE",
+        "glyph_name": "uniE1AE",
+        "file": "icon_E1AE.png",
+        "svg_file": "icon_E1AE.svg",
+        "semantic_name": "SPOTIFY_OPEN_APP"
+    },
+    "57775": {
+        "hex": "0xE1AF",
+        "glyph_name": "uniE1AF",
+        "file": "icon_E1AF.png",
+        "svg_file": "icon_E1AF.svg",
+        "semantic_name": "SPOTIFY_SEARCH"
+    },
+    "57776": {
+        "hex": "0xE1B0",
+        "glyph_name": "uniE1B0",
+        "file": "icon_E1B0.png",
+        "svg_file": "icon_E1B0.svg",
+        "semantic_name": ""
+    },
+    "57777": {
+        "hex": "0xE1B1",
+        "glyph_name": "uniE1B1",
+        "file": "icon_E1B1.png",
+        "svg_file": "icon_E1B1.svg",
+        "semantic_name": ""
+    },
+    "57778": {
+        "hex": "0xE1B2",
+        "glyph_name": "uniE1B2",
+        "file": "icon_E1B2.png",
+        "svg_file": "icon_E1B2.svg",
+        "semantic_name": "SPOTIFY_GENRES"
+    },
+    "57779": {
+        "hex": "0xE1B3",
+        "glyph_name": "uniE1B3",
+        "file": "icon_E1B3.png",
+        "svg_file": "icon_E1B3.svg",
+        "semantic_name": "SPOTIFY_FEATURED"
+    },
+    "57780": {
+        "hex": "0xE1B4",
+        "glyph_name": "uniE1B4",
+        "file": "icon_E1B4.png",
+        "svg_file": "icon_E1B4.svg",
+        "semantic_name": "SPOTIFY_CHARTS"
+    },
+    "57781": {
+        "hex": "0xE1B5",
+        "glyph_name": "uniE1B5",
+        "file": "icon_E1B5.png",
+        "svg_file": "icon_E1B5.svg",
+        "semantic_name": ""
+    },
+    "57782": {
+        "hex": "0xE1B6",
+        "glyph_name": "uniE1B6",
+        "file": "icon_E1B6.png",
+        "svg_file": "icon_E1B6.svg",
+        "semantic_name": "SPOTIFY_MY_SONGS"
+    },
+    "57783": {
+        "hex": "0xE1B7",
+        "glyph_name": "uniE1B7",
+        "file": "icon_E1B7.png",
+        "svg_file": "icon_E1B7.svg",
+        "semantic_name": "SPOTIFY_MY_PLAYLISTS"
+    },
+    "57784": {
+        "hex": "0xE1B8",
+        "glyph_name": "uniE1B8",
+        "file": "icon_E1B8.png",
+        "svg_file": "icon_E1B8.svg",
+        "semantic_name": "ADD_FAVORITE"
+    },
+    "57785": {
+        "hex": "0xE1B9",
+        "glyph_name": "uniE1B9",
+        "file": "icon_E1B9.png",
+        "svg_file": "icon_E1B9.svg",
+        "semantic_name": "REMOVE_FAVORITE"
+    },
+    "57786": {
+        "hex": "0xE1BA",
+        "glyph_name": "uniE1BA",
+        "file": "icon_E1BA.png",
+        "svg_file": "icon_E1BA.svg",
+        "semantic_name": ""
+    },
+    "57787": {
+        "hex": "0xE1BB",
+        "glyph_name": "uniE1BB",
+        "file": "icon_E1BB.png",
+        "svg_file": "icon_E1BB.svg",
+        "semantic_name": ""
+    },
+    "57788": {
+        "hex": "0xE1BC",
+        "glyph_name": "uniE1BC",
+        "file": "icon_E1BC.png",
+        "svg_file": "icon_E1BC.svg",
+        "semantic_name": ""
+    },
+    "57789": {
+        "hex": "0xE1BD",
+        "glyph_name": "uniE1BD",
+        "file": "icon_E1BD.png",
+        "svg_file": "icon_E1BD.svg",
+        "semantic_name": ""
+    },
+    "57790": {
+        "hex": "0xE1BE",
+        "glyph_name": "uniE1BE",
+        "file": "icon_E1BE.png",
+        "svg_file": "icon_E1BE.svg",
+        "semantic_name": ""
+    },
+    "57791": {
+        "hex": "0xE1BF",
+        "glyph_name": "uniE1BF",
+        "file": "icon_E1BF.png",
+        "svg_file": "icon_E1BF.svg",
+        "semantic_name": ""
+    },
+    "57792": {
+        "hex": "0xE1C0",
+        "glyph_name": "uniE1C0",
+        "file": "icon_E1C0.png",
+        "svg_file": "icon_E1C0.svg",
+        "semantic_name": ""
+    },
+    "57793": {
+        "hex": "0xE1C1",
+        "glyph_name": "uniE1C1",
+        "file": "icon_E1C1.png",
+        "svg_file": "icon_E1C1.svg",
+        "semantic_name": ""
+    },
+    "57794": {
+        "hex": "0xE1C2",
+        "glyph_name": "uniE1C2",
+        "file": "icon_E1C2.png",
+        "svg_file": "icon_E1C2.svg",
+        "semantic_name": "THUMBS_UP"
+    },
+    "57795": {
+        "hex": "0xE1C3",
+        "glyph_name": "uniE1C3",
+        "file": "icon_E1C3.png",
+        "svg_file": "icon_E1C3.svg",
+        "semantic_name": "THUMBS_DOWN"
+    },
+    "57796": {
+        "hex": "0xE1C4",
+        "glyph_name": "uniE1C4",
+        "file": "icon_E1C4.png",
+        "svg_file": "icon_E1C4.svg",
+        "semantic_name": ""
+    },
+    "57797": {
+        "hex": "0xE1C5",
+        "glyph_name": "uniE1C5",
+        "file": "icon_E1C5.png",
+        "svg_file": "icon_E1C5.svg",
+        "semantic_name": ""
+    },
+    "57798": {
+        "hex": "0xE1C6",
+        "glyph_name": "uniE1C6",
+        "file": "icon_E1C6.png",
+        "svg_file": "icon_E1C6.svg",
+        "semantic_name": "SIRIUSXM_ON_DEMAND"
+    },
+    "57799": {
+        "hex": "0xE1C7",
+        "glyph_name": "uniE1C7",
+        "file": "icon_E1C7.png",
+        "svg_file": "icon_E1C7.svg",
+        "semantic_name": "SIRIUSXM_CHANNELS"
+    },
+    "57800": {
+        "hex": "0xE1C8",
+        "glyph_name": "uniE1C8",
+        "file": "icon_E1C8.png",
+        "svg_file": "icon_E1C8.svg",
+        "semantic_name": "SIRIUSXM_FAVORITES"
+    },
+    "57801": {
+        "hex": "0xE1C9",
+        "glyph_name": "uniE1C9",
+        "file": "icon_E1C9.png",
+        "svg_file": "icon_E1C9.svg",
+        "semantic_name": ""
+    },
+    "57802": {
+        "hex": "0xE1CA",
+        "glyph_name": "uniE1CA",
+        "file": "icon_E1CA.png",
+        "svg_file": "icon_E1CA.svg",
+        "semantic_name": ""
+    },
+    "57803": {
+        "hex": "0xE1CB",
+        "glyph_name": "uniE1CB",
+        "file": "icon_E1CB.png",
+        "svg_file": "icon_E1CB.svg",
+        "semantic_name": ""
+    },
+    "57804": {
+        "hex": "0xE1CC",
+        "glyph_name": "uniE1CC",
+        "file": "icon_E1CC.png",
+        "svg_file": "icon_E1CC.svg",
+        "semantic_name": "DEEZER_ALBUMS"
+    },
+    "57805": {
+        "hex": "0xE1CD",
+        "glyph_name": "uniE1CD",
+        "file": "icon_E1CD.png",
+        "svg_file": "icon_E1CD.svg",
+        "semantic_name": ""
+    },
+    "57806": {
+        "hex": "0xE1CE",
+        "glyph_name": "uniE1CE",
+        "file": "icon_E1CE.png",
+        "svg_file": "icon_E1CE.svg",
+        "semantic_name": "DEEZER_CHARTS"
+    },
+    "57807": {
+        "hex": "0xE1CF",
+        "glyph_name": "uniE1CF",
+        "file": "icon_E1CF.png",
+        "svg_file": "icon_E1CF.svg",
+        "semantic_name": "DEEZER_PICKS"
+    },
+    "57808": {
+        "hex": "0xE1D0",
+        "glyph_name": "uniE1D0",
+        "file": "icon_E1D0.png",
+        "svg_file": "icon_E1D0.svg",
+        "semantic_name": "DEEZER_TRACKS"
+    },
+    "57809": {
+        "hex": "0xE1D1",
+        "glyph_name": "uniE1D1",
+        "file": "icon_E1D1.png",
+        "svg_file": "icon_E1D1.svg",
+        "semantic_name": "DEEZER_FLOW"
+    },
+    "57810": {
+        "hex": "0xE1D2",
+        "glyph_name": "uniE1D2",
+        "file": "icon_E1D2.png",
+        "svg_file": "icon_E1D2.svg",
+        "semantic_name": "DEEZER_RADIO"
+    },
+    "57811": {
+        "hex": "0xE1D3",
+        "glyph_name": "uniE1D3",
+        "file": "icon_E1D3.png",
+        "svg_file": "icon_E1D3.svg",
+        "semantic_name": "DEEZER_ARTISTS / LIBRARY"
+    },
+    "57812": {
+        "hex": "0xE1D4",
+        "glyph_name": "uniE1D4",
+        "file": "icon_E1D4.png",
+        "svg_file": "icon_E1D4.svg",
+        "semantic_name": "DEEZER_PLAYLISTS"
+    },
+    "57813": {
+        "hex": "0xE1D5",
+        "glyph_name": "uniE1D5",
+        "file": "icon_E1D5.png",
+        "svg_file": "icon_E1D5.svg",
+        "semantic_name": "DEEZER_SEARCH"
+    },
+    "57814": {
+        "hex": "0xE1D6",
+        "glyph_name": "uniE1D6",
+        "file": "icon_E1D6.png",
+        "svg_file": "icon_E1D6.svg",
+        "semantic_name": ""
+    },
+    "57815": {
+        "hex": "0xE1D7",
+        "glyph_name": "uniE1D7",
+        "file": "icon_E1D7.png",
+        "svg_file": "icon_E1D7.svg",
+        "semantic_name": ""
+    },
+    "57816": {
+        "hex": "0xE1D8",
+        "glyph_name": "uniE1D8",
+        "file": "icon_E1D8.png",
+        "svg_file": "icon_E1D8.svg",
+        "semantic_name": ""
+    },
+    "57817": {
+        "hex": "0xE1D9",
+        "glyph_name": "uniE1D9",
+        "file": "icon_E1D9.png",
+        "svg_file": "icon_E1D9.svg",
+        "semantic_name": ""
+    },
+    "57818": {
+        "hex": "0xE1DA",
+        "glyph_name": "uniE1DA",
+        "file": "icon_E1DA.png",
+        "svg_file": "icon_E1DA.svg",
+        "semantic_name": ""
+    },
+    "57819": {
+        "hex": "0xE1DB",
+        "glyph_name": "uniE1DB",
+        "file": "icon_E1DB.png",
+        "svg_file": "icon_E1DB.svg",
+        "semantic_name": ""
+    },
+    "57820": {
+        "hex": "0xE1DC",
+        "glyph_name": "uniE1DC",
+        "file": "icon_E1DC.png",
+        "svg_file": "icon_E1DC.svg",
+        "semantic_name": "NEXT_TRACK_ALT"
+    },
+    "57821": {
+        "hex": "0xE1DD",
+        "glyph_name": "uniE1DD",
+        "file": "icon_E1DD.png",
+        "svg_file": "icon_E1DD.svg",
+        "semantic_name": ""
+    },
+    "57822": {
+        "hex": "0xE1DE",
+        "glyph_name": "uniE1DE",
+        "file": "icon_E1DE.png",
+        "svg_file": "icon_E1DE.svg",
+        "semantic_name": ""
+    },
+    "57823": {
+        "hex": "0xE1DF",
+        "glyph_name": "uniE1DF",
+        "file": "icon_E1DF.png",
+        "svg_file": "icon_E1DF.svg",
+        "semantic_name": ""
+    },
+    "57824": {
+        "hex": "0xE1E0",
+        "glyph_name": "uniE1E0",
+        "file": "icon_E1E0.png",
+        "svg_file": "icon_E1E0.svg",
+        "semantic_name": ""
+    }
+}
