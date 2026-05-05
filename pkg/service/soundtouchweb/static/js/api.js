@@ -18,6 +18,11 @@ export const api = {
     }),
     power: (id) => req(`/api/device-power/${id}`, { method: 'POST' }),
     recents: (id) => req(`/api/device-recents/${id}`),
+    zone: (id) => req(`/api/zone/${id}`),
+    zoneAdd: (masterId, slaveId) => req(`/api/zone/${masterId}/add/${slaveId}`, { method: 'POST' }),
+    zoneRemove: (masterId, slaveId) => req(`/api/zone/${masterId}/remove/${slaveId}`, { method: 'POST' }),
+    zoneDissolve: (id) => req(`/api/zone/${id}/dissolve`, { method: 'POST' }),
+    zoneLeave: (id) => req(`/api/zone/${id}/leave`, { method: 'POST' }),
     play: (id, item) => req(`/api/device-play/${id}`, {
         method: 'POST',
         headers: JSON_HEADERS,

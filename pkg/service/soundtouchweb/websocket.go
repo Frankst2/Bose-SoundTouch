@@ -56,6 +56,7 @@ func (app *WebApp) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		defer conn.Close()
+
 		for {
 			if _, _, err := conn.NextReader(); err != nil {
 				log.Printf("WebSocket read error: %v", err)
@@ -226,6 +227,7 @@ func (app *WebApp) HandleDeviceWebSocket(w http.ResponseWriter, r *http.Request)
 
 	go func() {
 		defer conn.Close()
+
 		for {
 			if _, _, err := conn.NextReader(); err != nil {
 				log.Printf("Device WebSocket read error for %s: %v", deviceID, err)
@@ -305,6 +307,7 @@ func (app *WebApp) broadcast(msg webtypes.WebSocketMessage) {
 	for client := range app.WSClients {
 		if err := client.WriteJSON(msg); err != nil {
 			log.Printf("Failed to broadcast to WebSocket client: %v", err)
+
 			failed = append(failed, client)
 		}
 	}
