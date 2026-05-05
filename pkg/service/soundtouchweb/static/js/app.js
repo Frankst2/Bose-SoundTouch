@@ -6,6 +6,7 @@ import { NowPlaying } from './components/NowPlaying.js';
 import { Controls } from './components/Controls.js';
 import { Presets } from './components/Presets.js';
 import { Sources } from './components/Sources.js';
+import { Recents } from './components/Recents.js';
 import { TuneInBrowser } from './components/TuneInBrowser.js';
 import { api } from './api.js';
 
@@ -34,6 +35,7 @@ function DeviceDetail({ deviceId, devices, onBack }) {
             <${Controls} deviceId=${deviceId} status=${device.status} />
             <${Presets} deviceId=${deviceId} status=${device.status} />
             <${Sources} deviceId=${deviceId} status=${device.status} />
+            <${Recents} deviceId=${deviceId} />
         </div>
     `;
 }

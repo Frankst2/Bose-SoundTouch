@@ -296,6 +296,40 @@ img { display: block; max-width: 100%; }
 .source-icon { font-size: .9rem; line-height: 1; }
 .source-name { font-weight: 500; }
 
+/* ── Recents ─────────────────────────────────────────────────────────────── */
+.recents-section { margin-top: 1.25rem; }
+
+.recents-list { display: flex; flex-direction: column; gap: 1px; }
+
+.recent-item {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    width: 100%;
+    padding: .5rem .6rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    text-align: left;
+    color: var(--text);
+    transition: background .1s;
+}
+.recent-item:hover { background: var(--bg); }
+
+.recent-art {
+    width: 40px; height: 40px; border-radius: 4px;
+    object-fit: cover; flex-shrink: 0;
+}
+.recent-art-empty {
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg); font-size: 1.1rem;
+}
+.recent-info { flex: 1; overflow: hidden; }
+.recent-name { display: block; font-size: .875rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.recent-source { display: block; font-size: .75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: .05em; margin-top: .1rem; }
+.recent-play { color: var(--text-dim); font-size: .75rem; flex-shrink: 0; opacity: .5; }
+.recent-item:hover .recent-play { opacity: 1; }
+
 /* ── TuneIn ──────────────────────────────────────────────────────────────── */
 .tunein-toolbar { display: flex; gap: .5rem; margin-bottom: 1rem; }
 .tunein-search-input {

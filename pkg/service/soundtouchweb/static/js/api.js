@@ -17,6 +17,12 @@ export const api = {
         body: JSON.stringify({ level }),
     }),
     power: (id) => req(`/api/device-power/${id}`, { method: 'POST' }),
+    recents: (id) => req(`/api/device-recents/${id}`),
+    play: (id, item) => req(`/api/device-play/${id}`, {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify(item),
+    }),
     tuneInBrowse: (path) => req(path ? `/api/tunein/navigate/${path}` : '/api/tunein/navigate'),
     tuneInSearch: (q) => req(`/api/tunein/search?q=${encodeURIComponent(q)}`),
     control: (id, action, presetId) => req(`/api/control/${id}/${action}?id=${presetId}`),

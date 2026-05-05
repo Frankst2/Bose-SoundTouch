@@ -110,6 +110,8 @@ func (app *WebApp) Mount(r chi.Router) {
 	r.Post("/api/device-volume/{id}/{volume}", app.HandleDirectVolumeControl)
 	r.Post("/api/device-power/{id}", app.HandleDevicePower)
 	r.Get("/api/device-power-status/{id}", app.HandleDevicePowerStatus)
+	r.Get("/api/device-recents/{id}", app.HandleDeviceRecents)
+	r.Post("/api/device-play/{id}", app.HandleDevicePlay)
 	r.Get("/api/device-ws/{id}", app.HandleDeviceWebSocket)
 
 	r.Get("/", app.serveIndex)
@@ -596,6 +598,94 @@ func (app *WebApp) HandleTuneInNavigate(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 
 	if encErr := json.NewEncoder(w).Encode(webtypes.APIResponse{Success: true, Data: resp}); encErr != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+// HandleDeviceRecents returns recently played items for a device.
+func (app *WebApp) HandleDeviceRecents(w http.ResponseWriter, r *http.Request) {
+	deviceID := chi.URLParam(r, "id")
+
+	device, exists := app.Devices[deviceID]
+	if !exists {
+		app.sendError(w, "Device not found", http.StatusNotFound)
+		return
+	}
+
+	if device.Client == nil {
+		app.sendError(w, "Device client not available", http.StatusInternalServerError)
+		return
+	}
+
+	recents, err := device.Client.GetRecents()
+	if err != nil {
+		app.sendError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	if encErr := json.NewEncoder(w).Encode(webtypes.APIResponse{Success: true, Data: recents}); encErr != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+}
+
+// HandleDevicePlay plays an arbitrary content item on a device.
+func (app *WebApp) HandleDevicePlay(w http.ResponseWriter, r *http.Request) {
+	deviceID := chi.URLParam(r, "id")
+
+	device, exists := app.Devices[deviceID]
+	if !exists {
+		app.sendError(w, "Device not found", http.StatusNotFound)
+		return
+	}
+
+	if device.Client == nil {
+		app.sendError(w, "Device client not available", http.StatusInternalServerError)
+		return
+	}
+
+	var req struct {
+		Source        string `json:"source"`
+		Type          string `json:"type"`
+		Location      string `json:"location"`
+		SourceAccount string `json:"sourceAccount"`
+		ItemName      string `json:"itemName"`
+		ContainerArt  string `json:"containerArt"`
+		IsPresetable  bool   `json:"isPresetable"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		app.sendError(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Location == "" {
+		app.sendError(w, "location is required", http.StatusBadRequest)
+		return
+	}
+
+	contentItem := &models.ContentItem{
+		Source:        req.Source,
+		Type:          req.Type,
+		Location:      req.Location,
+		SourceAccount: req.SourceAccount,
+		ItemName:      req.ItemName,
+		ContainerArt:  req.ContainerArt,
+		IsPresetable:  req.IsPresetable,
+	}
+
+	if err := device.Client.SelectContentItem(contentItem); err != nil {
+		app.sendError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	if encErr := json.NewEncoder(w).Encode(webtypes.APIResponse{
+		Success: true,
+		Data:    map[string]string{"message": "Playing " + req.ItemName},
+	}); encErr != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
 }
