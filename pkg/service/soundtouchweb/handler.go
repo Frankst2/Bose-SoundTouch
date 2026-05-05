@@ -1,23 +1,33 @@
-// Package handlers contains HTTP handlers for the SoundTouch web UI.
-package handlers
+// Package soundtouchweb provides the SoundTouch web UI handler.
+package soundtouchweb
 
 import (
+	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
-	"github.com/gesellix/bose-soundtouch/cmd/soundtouch-web/webtypes"
+	"github.com/gesellix/bose-soundtouch/pkg/client"
+	"github.com/gesellix/bose-soundtouch/pkg/config"
+	"github.com/gesellix/bose-soundtouch/pkg/discovery"
 	"github.com/gesellix/bose-soundtouch/pkg/models"
 	bmxpkg "github.com/gesellix/bose-soundtouch/pkg/service/bmx"
+	"github.com/gesellix/bose-soundtouch/pkg/service/soundtouchweb/webtypes"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 )
 
-// WebApp holds the application state and dependencies
+//go:embed static
+var staticFS embed.FS
+
+// WebApp holds the application state and dependencies.
 type WebApp struct {
 	Devices   map[string]*webtypes.DeviceConnection
 	Upgrader  websocket.Upgrader
@@ -25,7 +35,7 @@ type WebApp struct {
 	WSMutex   sync.RWMutex
 }
 
-// NewWebApp creates a new WebApp instance for SPA mode
+// NewWebApp creates a bare WebApp with no discovery wired up (used by tests).
 func NewWebApp() *WebApp {
 	return &WebApp{
 		Devices:   make(map[string]*webtypes.DeviceConnection),
@@ -36,11 +46,139 @@ func NewWebApp() *WebApp {
 	}
 }
 
-// HandleAPIDevices returns all devices as JSON
+// New creates a WebApp and starts background device discovery.
+func New() *WebApp {
+	cfg, err := config.LoadFromEnv()
+	if err != nil {
+		cfg = config.DefaultConfig()
+	}
+
+	cfg.DiscoveryTimeout = 10 * time.Second
+	cfg.CacheEnabled = true
+
+	app := NewWebApp()
+	discoveryService := discovery.NewUnifiedDiscoveryService(cfg)
+
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		app.BroadcastDiscoveryStatus("starting", len(app.Devices))
+		app.discoverDevices(ctx, discoveryService)
+		app.BroadcastDiscoveryStatus("completed", len(app.Devices))
+		app.BroadcastDeviceList()
+	}()
+
+	return app
+}
+
+// Mount registers all routes on r.
+func (app *WebApp) Mount(r chi.Router) {
+	subFS, _ := fs.Sub(staticFS, "static")
+	r.Get("/static/*", http.StripPrefix("/static", http.FileServer(http.FS(subFS))).ServeHTTP)
+
+	r.Get("/ws", app.HandleWebSocket)
+
+	r.Get("/api/devices", app.HandleAPIDevices)
+	r.Get("/api/device/{id}", app.HandleAPIDevice)
+	r.Post("/api/discover", func(w http.ResponseWriter, r *http.Request) {
+		app.HandleAPIDiscover(w, r)
+		go func() {
+			cfg, err := config.LoadFromEnv()
+			if err != nil {
+				cfg = config.DefaultConfig()
+			}
+			cfg.DiscoveryTimeout = 10 * time.Second
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			app.BroadcastDiscoveryStatus("starting", len(app.Devices))
+			app.discoverDevices(ctx, discovery.NewUnifiedDiscoveryService(cfg))
+			app.BroadcastDiscoveryStatus("completed", len(app.Devices))
+			app.BroadcastDeviceList()
+		}()
+	})
+
+	r.Get("/api/control/{id}/{action}", app.HandleAPIControl)
+	r.Post("/api/control/{id}/{action}", app.HandleAPIControl)
+
+	r.Get("/api/tunein/search", app.HandleTuneInSearch)
+	r.Get("/api/tunein/navigate", app.HandleTuneInNavigate)
+	r.Get("/api/tunein/navigate/*", app.HandleTuneInNavigate)
+	r.Post("/api/tunein/play/{id}", app.HandlePlayTuneIn)
+
+	r.Post("/api/device-key/{id}/{key}", app.HandleDeviceKey)
+	r.Post("/api/device-volume/{id}/{volume}", app.HandleDirectVolumeControl)
+	r.Post("/api/device-power/{id}", app.HandleDevicePower)
+	r.Get("/api/device-power-status/{id}", app.HandleDevicePowerStatus)
+	r.Get("/api/device-ws/{id}", app.HandleDeviceWebSocket)
+
+	r.Get("/", app.serveIndex)
+	r.Get("/devices", app.serveIndex)
+	r.Get("/device/*", app.serveIndex)
+}
+
+func (app *WebApp) serveIndex(w http.ResponseWriter, _ *http.Request) {
+	data, _ := staticFS.ReadFile("static/index.html")
+	w.Header().Set("Content-Type", "text/html")
+	_, _ = w.Write(data)
+}
+
+func (app *WebApp) discoverDevices(ctx context.Context, discoveryService *discovery.UnifiedDiscoveryService) {
+	log.Println("Starting device discovery...")
+
+	devices, err := discoveryService.DiscoverDevices(ctx)
+	if err != nil {
+		log.Printf("Discovery failed: %v", err)
+		app.BroadcastDiscoveryStatus("failed", len(app.Devices))
+		return
+	}
+
+	log.Printf("Found %d devices", len(devices))
+
+	for _, device := range devices {
+		deviceID := device.Host
+
+		if _, exists := app.Devices[deviceID]; exists {
+			app.Devices[deviceID].LastSeen = time.Now()
+			continue
+		}
+
+		clientConfig := &client.Config{
+			Host:    device.Host,
+			Port:    device.Port,
+			Timeout: 10 * time.Second,
+		}
+
+		soundTouchClient := client.NewClient(clientConfig)
+
+		deviceInfo, err := soundTouchClient.GetDeviceInfo()
+		if err != nil {
+			log.Printf("Failed to get device info for %s: %v", device.Host, err)
+			continue
+		}
+
+		conn := &webtypes.DeviceConnection{
+			Client:     soundTouchClient,
+			DeviceInfo: deviceInfo,
+			LastSeen:   time.Now(),
+			Status: webtypes.DeviceStatus{
+				IsConnected:  false,
+				LastActivity: time.Now(),
+			},
+		}
+
+		go app.UpdateDeviceStatus(deviceID, conn)
+
+		app.Devices[deviceID] = conn
+
+		log.Printf("Added device: %s (%s) at %s", deviceInfo.Name, deviceInfo.Type, device.Host)
+	}
+}
+
+// HandleAPIDevices returns all devices as JSON.
 func (app *WebApp) HandleAPIDevices(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// Return all devices as JSON
 	devices := make(map[string]interface{})
 	for id, device := range app.Devices {
 		devices[id] = map[string]interface{}{
@@ -50,17 +188,12 @@ func (app *WebApp) HandleAPIDevices(w http.ResponseWriter, _ *http.Request) {
 		}
 	}
 
-	response := webtypes.APIResponse{
-		Success: true,
-		Data:    devices,
-	}
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
+	if err := json.NewEncoder(w).Encode(webtypes.APIResponse{Success: true, Data: devices}); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
 }
 
-// HandleAPIDevice returns a specific device as JSON
+// HandleAPIDevice returns a specific device as JSON.
 func (app *WebApp) HandleAPIDevice(w http.ResponseWriter, r *http.Request) {
 	deviceID := chi.URLParam(r, "id")
 	if deviceID == "" {
@@ -74,30 +207,23 @@ func (app *WebApp) HandleAPIDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update device status to get fresh power state
 	app.UpdateDeviceStatus(deviceID, device)
 
-	// Connect WebSocket for real-time updates if not already connected
 	if device.WebSocket == nil {
 		go app.ConnectDeviceWebSocket(deviceID, device)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 
-	response := webtypes.APIResponse{
+	if err := json.NewEncoder(w).Encode(webtypes.APIResponse{
 		Success: true,
-		Data: map[string]interface{}{
-			"info":   device.DeviceInfo,
-			"status": device.Status,
-		},
-	}
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
+		Data:    map[string]interface{}{"info": device.DeviceInfo, "status": device.Status},
+	}); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
 }
 
-// HandleAPIControl handles device control commands
+// HandleAPIControl handles device control commands.
 func (app *WebApp) HandleAPIControl(w http.ResponseWriter, r *http.Request) {
 	deviceID := chi.URLParam(r, "id")
 	action := chi.URLParam(r, "action")
@@ -113,7 +239,6 @@ func (app *WebApp) HandleAPIControl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Connect WebSocket for real-time updates if not already connected
 	if device.WebSocket == nil {
 		go app.ConnectDeviceWebSocket(deviceID, device)
 	}
@@ -123,7 +248,6 @@ func (app *WebApp) HandleAPIControl(w http.ResponseWriter, r *http.Request) {
 	app.handleControlAction(w, r, action, device)
 }
 
-// handleControlAction processes different control actions
 func (app *WebApp) handleControlAction(w http.ResponseWriter, r *http.Request, action string, device *webtypes.DeviceConnection) {
 	switch action {
 	case "play":
@@ -131,41 +255,31 @@ func (app *WebApp) handleControlAction(w http.ResponseWriter, r *http.Request, a
 			app.sendError(w, "Device client not available", http.StatusInternalServerError)
 			return
 		}
-
-		err := device.Client.Play()
-		app.sendControlResponse(w, err, "Started playback")
+		app.sendControlResponse(w, device.Client.Play(), "Started playback")
 	case "pause":
 		if device.Client == nil {
 			app.sendError(w, "Device client not available", http.StatusInternalServerError)
 			return
 		}
-
-		err := device.Client.Pause()
-		app.sendControlResponse(w, err, "Paused playback")
+		app.sendControlResponse(w, device.Client.Pause(), "Paused playback")
 	case "stop":
 		if device.Client == nil {
 			app.sendError(w, "Device client not available", http.StatusInternalServerError)
 			return
 		}
-
-		err := device.Client.Stop()
-		app.sendControlResponse(w, err, "Stopped playback")
+		app.sendControlResponse(w, device.Client.Stop(), "Stopped playback")
 	case "next":
 		if device.Client == nil {
 			app.sendError(w, "Device client not available", http.StatusInternalServerError)
 			return
 		}
-
-		err := device.Client.NextTrack()
-		app.sendControlResponse(w, err, "Next track")
+		app.sendControlResponse(w, device.Client.NextTrack(), "Next track")
 	case "previous":
 		if device.Client == nil {
 			app.sendError(w, "Device client not available", http.StatusInternalServerError)
 			return
 		}
-
-		err := device.Client.PrevTrack()
-		app.sendControlResponse(w, err, "Previous track")
+		app.sendControlResponse(w, device.Client.PrevTrack(), "Previous track")
 	case "volume":
 		app.handleVolumeControl(w, r, device)
 	case "mute":
@@ -173,9 +287,7 @@ func (app *WebApp) handleControlAction(w http.ResponseWriter, r *http.Request, a
 			app.sendError(w, "Device client not available", http.StatusInternalServerError)
 			return
 		}
-
-		err := device.Client.SendKey(models.KeyMute)
-		app.sendControlResponse(w, err, "Toggled mute")
+		app.sendControlResponse(w, device.Client.SendKey(models.KeyMute), "Toggled mute")
 	case "preset":
 		app.handlePresetControl(w, r, device)
 	case "bass":
@@ -187,7 +299,6 @@ func (app *WebApp) handleControlAction(w http.ResponseWriter, r *http.Request, a
 	}
 }
 
-// handleVolumeControl processes volume control requests
 func (app *WebApp) handleVolumeControl(w http.ResponseWriter, r *http.Request, device *webtypes.DeviceConnection) {
 	if r.Method != http.MethodPost {
 		app.sendError(w, "POST required for volume control", http.StatusMethodNotAllowed)
@@ -210,11 +321,9 @@ func (app *WebApp) handleVolumeControl(w http.ResponseWriter, r *http.Request, d
 		return
 	}
 
-	err := device.Client.SetVolume(volumeReq.Level)
-	app.sendControlResponse(w, err, fmt.Sprintf("Volume set to %d", volumeReq.Level))
+	app.sendControlResponse(w, device.Client.SetVolume(volumeReq.Level), fmt.Sprintf("Volume set to %d", volumeReq.Level))
 }
 
-// handlePresetControl processes preset control requests
 func (app *WebApp) handlePresetControl(w http.ResponseWriter, r *http.Request, device *webtypes.DeviceConnection) {
 	presetParam := r.URL.Query().Get("id")
 	if presetParam == "" {
@@ -233,11 +342,9 @@ func (app *WebApp) handlePresetControl(w http.ResponseWriter, r *http.Request, d
 		return
 	}
 
-	err = device.Client.SelectPreset(presetID)
-	app.sendControlResponse(w, err, fmt.Sprintf("Selected preset %d", presetID))
+	app.sendControlResponse(w, device.Client.SelectPreset(presetID), fmt.Sprintf("Selected preset %d", presetID))
 }
 
-// handleBassControl processes bass control requests
 func (app *WebApp) handleBassControl(w http.ResponseWriter, r *http.Request, device *webtypes.DeviceConnection) {
 	if r.Method != http.MethodPost {
 		app.sendError(w, "POST required for bass control", http.StatusMethodNotAllowed)
@@ -260,11 +367,9 @@ func (app *WebApp) handleBassControl(w http.ResponseWriter, r *http.Request, dev
 		return
 	}
 
-	err := device.Client.SetBass(bassReq.Level)
-	app.sendControlResponse(w, err, fmt.Sprintf("Bass set to %d", bassReq.Level))
+	app.sendControlResponse(w, device.Client.SetBass(bassReq.Level), fmt.Sprintf("Bass set to %d", bassReq.Level))
 }
 
-// handleSourceControl processes source control requests
 func (app *WebApp) handleSourceControl(w http.ResponseWriter, r *http.Request, device *webtypes.DeviceConnection) {
 	sourceParam := r.URL.Query().Get("name")
 	if sourceParam == "" {
@@ -277,43 +382,34 @@ func (app *WebApp) handleSourceControl(w http.ResponseWriter, r *http.Request, d
 		return
 	}
 
-	err := device.Client.SelectSource(sourceParam, "")
-	app.sendControlResponse(w, err, fmt.Sprintf("Selected source %s", sourceParam))
+	account := r.URL.Query().Get("account")
+	app.sendControlResponse(w, device.Client.SelectSource(sourceParam, account), fmt.Sprintf("Selected source %s", sourceParam))
 }
 
-// sendControlResponse sends a control command response
 func (app *WebApp) sendControlResponse(w http.ResponseWriter, err error, successMessage string) {
 	if err != nil {
 		app.sendError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	response := webtypes.APIResponse{
+	if encErr := json.NewEncoder(w).Encode(webtypes.APIResponse{
 		Success: true,
 		Data:    map[string]string{"message": successMessage},
-	}
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
+	}); encErr != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
 }
 
-// sendError sends an error response
 func (app *WebApp) sendError(w http.ResponseWriter, message string, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 
-	response := webtypes.APIResponse{
-		Success: false,
-		Error:   message,
-	}
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
+	if err := json.NewEncoder(w).Encode(webtypes.APIResponse{Success: false, Error: message}); err != nil {
 		http.Error(w, "Failed to encode error response", http.StatusInternalServerError)
 	}
 }
 
-// HandleDeviceKey handles sending key commands to devices
+// HandleDeviceKey sends a key command to a device.
 func (app *WebApp) HandleDeviceKey(w http.ResponseWriter, r *http.Request) {
 	deviceID := chi.URLParam(r, "id")
 	key := chi.URLParam(r, "key")
@@ -324,7 +420,6 @@ func (app *WebApp) HandleDeviceKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Connect WebSocket for real-time updates if not already connected
 	if device.WebSocket == nil {
 		go app.ConnectDeviceWebSocket(deviceID, device)
 	}
@@ -335,12 +430,10 @@ func (app *WebApp) HandleDeviceKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-
-	err := device.Client.SendKey(key)
-	app.sendControlResponse(w, err, fmt.Sprintf("Sent key command: %s", key))
+	app.sendControlResponse(w, device.Client.SendKey(key), fmt.Sprintf("Sent key command: %s", key))
 }
 
-// HandleDirectVolumeControl handles direct volume setting via URL parameter
+// HandleDirectVolumeControl sets volume via URL parameter.
 func (app *WebApp) HandleDirectVolumeControl(w http.ResponseWriter, r *http.Request) {
 	deviceID := chi.URLParam(r, "id")
 
@@ -356,7 +449,6 @@ func (app *WebApp) HandleDirectVolumeControl(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// Connect WebSocket for real-time updates if not already connected
 	if device.WebSocket == nil {
 		go app.ConnectDeviceWebSocket(deviceID, device)
 	}
@@ -367,12 +459,10 @@ func (app *WebApp) HandleDirectVolumeControl(w http.ResponseWriter, r *http.Requ
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-
-	err = device.Client.SetVolume(volumeLevel)
-	app.sendControlResponse(w, err, fmt.Sprintf("Volume set to %d", volumeLevel))
+	app.sendControlResponse(w, device.Client.SetVolume(volumeLevel), fmt.Sprintf("Volume set to %d", volumeLevel))
 }
 
-// HandleDevicePower handles power toggle commands for devices
+// HandleDevicePower toggles device power.
 func (app *WebApp) HandleDevicePower(w http.ResponseWriter, r *http.Request) {
 	deviceID := chi.URLParam(r, "id")
 
@@ -382,7 +472,6 @@ func (app *WebApp) HandleDevicePower(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Connect WebSocket for real-time updates if not already connected
 	if device.WebSocket == nil {
 		go app.ConnectDeviceWebSocket(deviceID, device)
 	}
@@ -393,13 +482,10 @@ func (app *WebApp) HandleDevicePower(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-
-	// Send POWER key command to toggle device power
-	err := device.Client.SendKey("POWER")
-	app.sendControlResponse(w, err, "Power toggle command sent")
+	app.sendControlResponse(w, device.Client.SendKey("POWER"), "Power toggle command sent")
 }
 
-// HandleDevicePowerStatus handles lightweight power status check
+// HandleDevicePowerStatus returns a lightweight power status check.
 func (app *WebApp) HandleDevicePowerStatus(w http.ResponseWriter, r *http.Request) {
 	deviceID := chi.URLParam(r, "id")
 
@@ -416,7 +502,6 @@ func (app *WebApp) HandleDevicePowerStatus(w http.ResponseWriter, r *http.Reques
 
 	w.Header().Set("Content-Type", "application/json")
 
-	// Quick power status check by getting now playing
 	nowPlaying, err := device.Client.GetNowPlaying()
 	if err != nil {
 		app.sendControlResponse(w, err, "Failed to get power status")
@@ -425,89 +510,19 @@ func (app *WebApp) HandleDevicePowerStatus(w http.ResponseWriter, r *http.Reques
 
 	isPoweredOn := nowPlaying != nil && nowPlaying.Source != "STANDBY"
 
-	response := webtypes.APIResponse{
+	if encErr := json.NewEncoder(w).Encode(webtypes.APIResponse{
 		Success: true,
 		Data: map[string]interface{}{
 			"deviceId":    deviceID,
 			"isPoweredOn": isPoweredOn,
 			"source":      nowPlaying.Source,
 		},
-	}
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
+	}); encErr != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
 }
 
-// BroadcastDeviceList sends updated device list to all connected WebSocket clients
-func (app *WebApp) BroadcastDeviceList() {
-	app.WSMutex.RLock()
-	defer app.WSMutex.RUnlock()
-
-	devices := make(map[string]interface{})
-	for id, device := range app.Devices {
-		devices[id] = map[string]interface{}{
-			"info":     device.DeviceInfo,
-			"status":   device.Status,
-			"lastSeen": device.LastSeen,
-		}
-	}
-
-	message := webtypes.WebSocketMessage{
-		Type: "devices",
-		Data: devices,
-	}
-
-	// Send to all connected clients
-	var failedClients []*websocket.Conn
-
-	for client := range app.WSClients {
-		if err := client.WriteJSON(message); err != nil {
-			log.Printf("Failed to send device update to WebSocket client: %v", err)
-			// Mark for removal to avoid modifying map during iteration
-			failedClients = append(failedClients, client)
-		}
-	}
-
-	// Remove failed clients
-	for _, client := range failedClients {
-		delete(app.WSClients, client)
-		client.Close()
-	}
-}
-
-// BroadcastDiscoveryStatus sends discovery progress updates to all connected WebSocket clients
-func (app *WebApp) BroadcastDiscoveryStatus(status string, deviceCount int) {
-	app.WSMutex.RLock()
-	defer app.WSMutex.RUnlock()
-
-	message := webtypes.WebSocketMessage{
-		Type: "discovery_status",
-		Data: map[string]interface{}{
-			"status":      status,
-			"deviceCount": deviceCount,
-		},
-	}
-
-	// Send to all connected clients
-	var failedClients []*websocket.Conn
-
-	for client := range app.WSClients {
-		if err := client.WriteJSON(message); err != nil {
-			log.Printf("Failed to send discovery status to WebSocket client: %v", err)
-			// Mark for removal to avoid modifying map during iteration
-			failedClients = append(failedClients, client)
-		}
-	}
-
-	// Remove failed clients
-	for _, client := range failedClients {
-		delete(app.WSClients, client)
-		client.Close()
-	}
-}
-
-// HandleTuneInSearch handles TuneIn search requests, proxying directly to the bmx package.
+// HandleTuneInSearch proxies a TuneIn search to the bmx package.
 func (app *WebApp) HandleTuneInSearch(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query().Get("q")
 	if query == "" {
@@ -528,12 +543,7 @@ func (app *WebApp) HandleTuneInSearch(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleTuneInNavigate handles TuneIn browse/navigate requests, proxying directly to the bmx package.
-// Supported path suffixes (relative to /api/tunein/navigate):
-//   - (empty)                             → top-level browse
-//   - /{encodedURI}                       → browse the given TuneIn URI
-//   - /sub/{n}/{encodedURI}               → single subsection
-//   - /profiles/{type}/{id}/{encodedURI}  → artist/program profile
+// HandleTuneInNavigate proxies a TuneIn browse/navigate request to the bmx package.
 func (app *WebApp) HandleTuneInNavigate(w http.ResponseWriter, r *http.Request) {
 	wildcard := chi.URLParam(r, "*")
 
@@ -590,7 +600,7 @@ func (app *WebApp) HandleTuneInNavigate(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// HandlePlayTuneIn plays a TuneIn content item on a specific device via POST /select.
+// HandlePlayTuneIn plays a TuneIn item on a specific device.
 func (app *WebApp) HandlePlayTuneIn(w http.ResponseWriter, r *http.Request) {
 	deviceID := chi.URLParam(r, "id")
 	if deviceID == "" {
@@ -642,7 +652,10 @@ func (app *WebApp) HandlePlayTuneIn(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	if encErr := json.NewEncoder(w).Encode(webtypes.APIResponse{Success: true, Data: map[string]string{"message": "Playing " + req.Name}}); encErr != nil {
+	if encErr := json.NewEncoder(w).Encode(webtypes.APIResponse{
+		Success: true,
+		Data:    map[string]string{"message": "Playing " + req.Name},
+	}); encErr != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
 }

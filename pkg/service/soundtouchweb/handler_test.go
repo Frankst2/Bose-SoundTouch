@@ -1,5 +1,4 @@
-// Package handlers contains tests for HTTP handlers.
-package handlers
+package soundtouchweb
 
 import (
 	"context"
@@ -10,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gesellix/bose-soundtouch/cmd/soundtouch-web/webtypes"
+	"github.com/gesellix/bose-soundtouch/pkg/service/soundtouchweb/webtypes"
 	"github.com/gesellix/bose-soundtouch/pkg/client"
 	"github.com/gesellix/bose-soundtouch/pkg/models"
 	"github.com/go-chi/chi/v5"

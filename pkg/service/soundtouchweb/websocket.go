@@ -1,5 +1,4 @@
-// Package handlers contains WebSocket handlers for real-time communication.
-package handlers
+package soundtouchweb
 
 import (
 	"encoding/json"
@@ -7,13 +6,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gesellix/bose-soundtouch/cmd/soundtouch-web/webtypes"
 	"github.com/gesellix/bose-soundtouch/pkg/models"
+	"github.com/gesellix/bose-soundtouch/pkg/service/soundtouchweb/webtypes"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/websocket"
 )
 
-// HandleWebSocket handles WebSocket connections for real-time updates
+// HandleWebSocket handles browser WebSocket connections for real-time updates.
 func (app *WebApp) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := app.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -22,19 +21,16 @@ func (app *WebApp) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer func() {
-		// Unregister client
 		app.WSMutex.Lock()
 		delete(app.WSClients, conn)
 		app.WSMutex.Unlock()
 		conn.Close()
 	}()
 
-	// Register client
 	app.WSMutex.Lock()
 	app.WSClients[conn] = true
 	app.WSMutex.Unlock()
 
-	// Send initial device list
 	devices := make(map[string]interface{})
 	for id, device := range app.Devices {
 		devices[id] = map[string]interface{}{
@@ -44,33 +40,22 @@ func (app *WebApp) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	initialMessage := webtypes.WebSocketMessage{
-		Type: "devices",
-		Data: devices,
-	}
-
-	if err := conn.WriteJSON(initialMessage); err != nil {
+	if err := conn.WriteJSON(webtypes.WebSocketMessage{Type: "devices", Data: devices}); err != nil {
 		log.Printf("Failed to send initial data: %v", err)
 		return
 	}
 
-	// Keep connection alive and send updates
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	// Set up ping handler to detect client disconnects
 	conn.SetPongHandler(func(string) error {
 		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 		return nil
 	})
-
-	// Set initial read deadline
 	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 
-	// Handle incoming messages in a separate goroutine
 	go func() {
 		defer conn.Close()
-
 		for {
 			if _, _, err := conn.NextReader(); err != nil {
 				log.Printf("WebSocket read error: %v", err)
@@ -79,24 +64,19 @@ func (app *WebApp) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// Main loop for sending periodic updates
 	for range ticker.C {
-		// Send ping to check if client is still connected
 		if err := conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
 			log.Printf("Failed to send ping: %v", err)
 			return
 		}
 
-		// Send periodic status updates
 		for id, device := range app.Devices {
 			if device.Status.IsConnected {
-				statusMessage := webtypes.WebSocketMessage{
+				if err := conn.WriteJSON(webtypes.WebSocketMessage{
 					Type:     "status_update",
 					DeviceID: id,
 					Data:     device.Status,
-				}
-
-				if err := conn.WriteJSON(statusMessage); err != nil {
+				}); err != nil {
 					log.Printf("Failed to send status update: %v", err)
 					return
 				}
@@ -105,36 +85,31 @@ func (app *WebApp) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleAPIDiscover triggers device discovery
+// HandleAPIDiscover acknowledges a discovery request (actual discovery is triggered by Mount).
 func (app *WebApp) HandleAPIDiscover(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		app.sendError(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Discovery will be triggered by the main app
 	w.Header().Set("Content-Type", "application/json")
 
-	response := webtypes.APIResponse{
+	if err := json.NewEncoder(w).Encode(webtypes.APIResponse{
 		Success: true,
 		Data:    map[string]string{"message": "Discovery started"},
-	}
-
-	if err := json.NewEncoder(w).Encode(response); err != nil {
+	}); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 	}
 }
 
-// ConnectDeviceWebSocket establishes a WebSocket connection to a device
+// ConnectDeviceWebSocket establishes a WebSocket connection to a SoundTouch device.
 func (app *WebApp) ConnectDeviceWebSocket(deviceID string, conn *webtypes.DeviceConnection) {
-	// Skip WebSocket connection if client is not available (e.g., in tests)
 	if conn.Client == nil {
 		return
 	}
 
 	wsClient := conn.Client.NewWebSocketClient(nil)
 
-	// Setup event handlers
 	wsClient.OnNowPlaying(func(event *models.NowPlayingUpdatedEvent) {
 		conn.Status.NowPlaying = &event.NowPlaying
 		conn.Status.LastActivity = time.Now()
@@ -155,7 +130,6 @@ func (app *WebApp) ConnectDeviceWebSocket(deviceID string, conn *webtypes.Device
 		conn.Status.LastActivity = time.Now()
 	})
 
-	// Connect WebSocket
 	if err := wsClient.Connect(); err != nil {
 		log.Printf("Failed to connect WebSocket for device %s: %v", deviceID, err)
 		return
@@ -166,7 +140,6 @@ func (app *WebApp) ConnectDeviceWebSocket(deviceID string, conn *webtypes.Device
 
 	log.Printf("WebSocket connected for device %s", deviceID)
 
-	// Wait for disconnection
 	wsClient.Wait()
 
 	conn.Status.IsConnected = false
@@ -174,55 +147,46 @@ func (app *WebApp) ConnectDeviceWebSocket(deviceID string, conn *webtypes.Device
 	log.Printf("WebSocket disconnected for device %s", deviceID)
 }
 
-// UpdateDeviceStatus fetches current status from device
+// UpdateDeviceStatus fetches current status from a device.
 func (app *WebApp) UpdateDeviceStatus(_ string, conn *webtypes.DeviceConnection) {
-	// Skip status update if client is not available (e.g., in tests)
 	if conn.Client == nil {
 		return
 	}
 
 	statusUpdated := false
 
-	// Get current now playing
 	if nowPlaying, err := conn.Client.GetNowPlaying(); err == nil {
 		conn.Status.NowPlaying = nowPlaying
 		statusUpdated = true
 	}
 
-	// Get current volume
 	if volume, err := conn.Client.GetVolume(); err == nil {
 		conn.Status.Volume = volume
 		statusUpdated = true
 	}
 
-	// Get presets
 	if presets, err := conn.Client.GetPresets(); err == nil {
 		conn.Status.Presets = presets
 		statusUpdated = true
 	}
 
-	// Update last activity if any status was updated
 	if statusUpdated {
 		conn.Status.LastActivity = time.Now()
 	}
-	// Get sources
+
 	if sources, err := conn.Client.GetSources(); err == nil {
 		conn.Status.Sources = sources
-		statusUpdated = true
 	}
 
-	// Get bass (if available)
 	if bass, err := conn.Client.GetBass(); err == nil {
 		conn.Status.Bass = bass
-		statusUpdated = true
 	}
 
-	// Mark as connected if we successfully got at least one status
 	conn.Status.IsConnected = statusUpdated
 	conn.Status.LastActivity = time.Now()
 }
 
-// HandleDeviceWebSocket handles individual device WebSocket connections for real-time device-specific updates
+// HandleDeviceWebSocket handles per-device WebSocket connections for real-time device-specific updates.
 func (app *WebApp) HandleDeviceWebSocket(w http.ResponseWriter, r *http.Request) {
 	deviceID := chi.URLParam(r, "id")
 	if deviceID == "" {
@@ -245,34 +209,23 @@ func (app *WebApp) HandleDeviceWebSocket(w http.ResponseWriter, r *http.Request)
 
 	log.Printf("Device WebSocket connected for %s", deviceID)
 
-	// Send initial device status
-	initialMessage := webtypes.WebSocketMessage{
+	if err := conn.WriteJSON(webtypes.WebSocketMessage{
 		Type:     "device_status",
 		DeviceID: deviceID,
-		Data: map[string]interface{}{
-			"info":   device.DeviceInfo,
-			"status": device.Status,
-		},
-	}
-
-	if err := conn.WriteJSON(initialMessage); err != nil {
+		Data:     map[string]interface{}{"info": device.DeviceInfo, "status": device.Status},
+	}); err != nil {
 		log.Printf("Failed to send initial device status: %v", err)
 		return
 	}
 
-	// Set up ping handler to detect client disconnects
 	conn.SetPongHandler(func(string) error {
 		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 		return nil
 	})
-
-	// Set initial read deadline
 	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 
-	// Handle incoming messages in a separate goroutine
 	go func() {
 		defer conn.Close()
-
 		for {
 			if _, _, err := conn.NextReader(); err != nil {
 				log.Printf("Device WebSocket read error for %s: %v", deviceID, err)
@@ -281,36 +234,26 @@ func (app *WebApp) HandleDeviceWebSocket(w http.ResponseWriter, r *http.Request)
 		}
 	}()
 
-	// Send periodic device status updates
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		// Send ping to check if client is still connected
 		if err := conn.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
 			log.Printf("Failed to send ping to device WebSocket %s: %v", deviceID, err)
 			return
 		}
 
-		// Send device status update
-		statusMessage := webtypes.WebSocketMessage{
+		if err := conn.WriteJSON(webtypes.WebSocketMessage{
 			Type:     "device_status",
 			DeviceID: deviceID,
-			Data: map[string]interface{}{
-				"info":   device.DeviceInfo,
-				"status": device.Status,
-			},
-		}
-
-		if err := conn.WriteJSON(statusMessage); err != nil {
+			Data:     map[string]interface{}{"info": device.DeviceInfo, "status": device.Status},
+		}); err != nil {
 			log.Printf("Failed to send device status update for %s: %v", deviceID, err)
 			return
 		}
 
-		// If device has active WebSocket connection to SoundTouch device,
-		// also send any real-time updates from that connection
 		if device.WebSocket != nil && device.Status.IsConnected {
-			realtimeMessage := webtypes.WebSocketMessage{
+			if err := conn.WriteJSON(webtypes.WebSocketMessage{
 				Type:     "device_realtime",
 				DeviceID: deviceID,
 				Data: map[string]interface{}{
@@ -318,12 +261,56 @@ func (app *WebApp) HandleDeviceWebSocket(w http.ResponseWriter, r *http.Request)
 					"volume":     device.Status.Volume,
 					"timestamp":  time.Now(),
 				},
-			}
-
-			if err := conn.WriteJSON(realtimeMessage); err != nil {
+			}); err != nil {
 				log.Printf("Failed to send realtime update for %s: %v", deviceID, err)
 				return
 			}
 		}
+	}
+}
+
+// BroadcastDeviceList sends the updated device list to all connected browser WebSocket clients.
+func (app *WebApp) BroadcastDeviceList() {
+	app.WSMutex.RLock()
+	defer app.WSMutex.RUnlock()
+
+	devices := make(map[string]interface{})
+	for id, device := range app.Devices {
+		devices[id] = map[string]interface{}{
+			"info":     device.DeviceInfo,
+			"status":   device.Status,
+			"lastSeen": device.LastSeen,
+		}
+	}
+
+	app.broadcast(webtypes.WebSocketMessage{Type: "devices", Data: devices})
+}
+
+// BroadcastDiscoveryStatus sends discovery progress to all connected browser WebSocket clients.
+func (app *WebApp) BroadcastDiscoveryStatus(status string, deviceCount int) {
+	app.WSMutex.RLock()
+	defer app.WSMutex.RUnlock()
+
+	app.broadcast(webtypes.WebSocketMessage{
+		Type: "discovery_status",
+		Data: map[string]interface{}{"status": status, "deviceCount": deviceCount},
+	})
+}
+
+// broadcast sends a message to all registered WS clients, removing failed ones.
+// Caller must hold at least a read lock on WSMutex.
+func (app *WebApp) broadcast(msg webtypes.WebSocketMessage) {
+	var failed []*websocket.Conn
+
+	for client := range app.WSClients {
+		if err := client.WriteJSON(msg); err != nil {
+			log.Printf("Failed to broadcast to WebSocket client: %v", err)
+			failed = append(failed, client)
+		}
+	}
+
+	for _, client := range failed {
+		delete(app.WSClients, client)
+		client.Close()
 	}
 }

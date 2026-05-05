@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gesellix/bose-soundtouch/cmd/soundtouch-web/handlers"
-	"github.com/gesellix/bose-soundtouch/cmd/soundtouch-web/webtypes"
 	"github.com/gesellix/bose-soundtouch/pkg/models"
+	"github.com/gesellix/bose-soundtouch/pkg/service/soundtouchweb"
+	"github.com/gesellix/bose-soundtouch/pkg/service/soundtouchweb/webtypes"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -55,22 +55,19 @@ func TestSPARouting(t *testing.T) {
 			req := httptest.NewRequest("GET", tt.path, nil)
 			w := httptest.NewRecorder()
 
-			// Simulate SPA routing handler
 			spaHandler := func(w http.ResponseWriter, r *http.Request) {
-				// If it's an API route, let it pass through
 				if strings.HasPrefix(r.URL.Path, "/api/") || strings.HasPrefix(r.URL.Path, "/static/") || strings.HasPrefix(r.URL.Path, "/ws") {
 					http.NotFound(w, r)
 					return
 				}
 
-				// Serve the SPA index.html content (simulated)
 				w.Header().Set("Content-Type", "text/html")
 				w.WriteHeader(http.StatusOK)
 				w.Write([]byte(`<!doctype html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>SoundTouch Control Center</title>
+    <title>SoundTouch Web</title>
 </head>
 <body>
     <div id="app">SPA Content</div>
@@ -100,7 +97,7 @@ func TestSPARouting(t *testing.T) {
 }
 
 func TestAPIEndpoints(t *testing.T) {
-	app := handlers.NewWebApp()
+	app := soundtouchweb.NewWebApp()
 
 	tests := []struct {
 		name           string
@@ -127,7 +124,7 @@ func TestAPIEndpoints(t *testing.T) {
 			name:           "device API with ID",
 			path:           "/api/device/test-device",
 			method:         "GET",
-			expectedStatus: http.StatusNotFound, // Device won't exist in test
+			expectedStatus: http.StatusNotFound,
 			expectedJSON:   true,
 		},
 	}
@@ -160,7 +157,6 @@ func TestAPIEndpoints(t *testing.T) {
 					t.Errorf("Expected JSON content type, got %s", contentType)
 				}
 
-				// Validate JSON response structure
 				var response webtypes.APIResponse
 				if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
 					t.Errorf("Invalid JSON response: %v", err)
@@ -171,7 +167,7 @@ func TestAPIEndpoints(t *testing.T) {
 }
 
 func TestAPIResponseFormat(t *testing.T) {
-	app := handlers.NewWebApp()
+	app := soundtouchweb.NewWebApp()
 
 	req := httptest.NewRequest("GET", "/api/devices", nil)
 	w := httptest.NewRecorder()
@@ -183,7 +179,6 @@ func TestAPIResponseFormat(t *testing.T) {
 		t.Fatalf("Failed to decode JSON response: %v", err)
 	}
 
-	// Check API response structure
 	if !response.Success {
 		t.Errorf("Expected success=true, got success=%v", response.Success)
 	}
@@ -192,7 +187,6 @@ func TestAPIResponseFormat(t *testing.T) {
 		t.Errorf("Expected data field to be present")
 	}
 
-	// Data should be an empty map for no devices
 	dataMap, ok := response.Data.(map[string]interface{})
 	if !ok {
 		t.Errorf("Expected data to be a map, got %T", response.Data)
@@ -204,7 +198,7 @@ func TestAPIResponseFormat(t *testing.T) {
 }
 
 func TestControlAPIValidation(t *testing.T) {
-	app := handlers.NewWebApp()
+	app := soundtouchweb.NewWebApp()
 
 	tests := []struct {
 		name           string
@@ -249,7 +243,6 @@ func TestControlAPIValidation(t *testing.T) {
 		},
 	}
 
-	// Add a mock device for testing unknown action validation
 	mockDevice := &webtypes.DeviceConnection{
 		Client:     nil,
 		DeviceInfo: &models.DeviceInfo{Name: "Test Device"},
@@ -278,7 +271,6 @@ func TestControlAPIValidation(t *testing.T) {
 				t.Errorf("Test %s: Expected status %d, got %d. Response: %s", tt.name, tt.expectedStatus, w.Code, w.Body.String())
 			}
 
-			// Validate error response format
 			contentType := w.Header().Get("Content-Type")
 			if !strings.Contains(contentType, "application/json") {
 				t.Errorf("Expected JSON content type, got %s", contentType)
@@ -301,9 +293,8 @@ func TestControlAPIValidation(t *testing.T) {
 }
 
 func TestWebSocketUpgrade(t *testing.T) {
-	app := handlers.NewWebApp()
+	app := soundtouchweb.NewWebApp()
 
-	// Test WebSocket upgrade request
 	req := httptest.NewRequest("GET", "/ws", nil)
 	req.Header.Set("Connection", "upgrade")
 	req.Header.Set("Upgrade", "websocket")
@@ -312,16 +303,11 @@ func TestWebSocketUpgrade(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	// The actual WebSocket upgrade will fail in test environment,
-	// but we can check that the handler exists and accepts the request
 	app.HandleWebSocket(w, req)
-
-	// In a real test environment, this would fail with a websocket upgrade error
-	// We're just checking the handler doesn't panic and processes the request
 }
 
 func TestJSONAPIConsistency(t *testing.T) {
-	app := handlers.NewWebApp()
+	app := soundtouchweb.NewWebApp()
 
 	endpoints := []string{
 		"/api/devices",
@@ -344,19 +330,16 @@ func TestJSONAPIConsistency(t *testing.T) {
 				}
 			}
 
-			// All API endpoints should return JSON
 			contentType := w.Header().Get("Content-Type")
 			if !strings.Contains(contentType, "application/json") {
 				t.Errorf("Endpoint %s should return JSON, got %s", endpoint, contentType)
 			}
 
-			// All responses should follow APIResponse structure
 			var response webtypes.APIResponse
 			if err := json.NewDecoder(w.Body).Decode(&response); err != nil {
 				t.Errorf("Endpoint %s returned invalid JSON: %v", endpoint, err)
 			}
 
-			// Response should have either data or error
 			if response.Success && response.Data == nil {
 				t.Errorf("Endpoint %s: success response should have data", endpoint)
 			}
