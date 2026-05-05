@@ -1,3 +1,5 @@
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
+
 async function req(url, opts = {}) {
     const r = await fetch(url, opts);
     return r.json();
@@ -9,6 +11,11 @@ export const api = {
     discover: () => req('/api/discover', { method: 'POST' }),
     key: (id, key) => req(`/api/device-key/${id}/${key}`, { method: 'POST' }),
     volume: (id, level) => req(`/api/device-volume/${id}/${level}`, { method: 'POST' }),
+    bass: (id, level) => req(`/api/control/${id}/bass`, {
+        method: 'POST',
+        headers: JSON_HEADERS,
+        body: JSON.stringify({ level }),
+    }),
     power: (id) => req(`/api/device-power/${id}`, { method: 'POST' }),
     tuneInBrowse: (path) => req(path ? `/api/tunein/navigate/${path}` : '/api/tunein/navigate'),
     tuneInSearch: (q) => req(`/api/tunein/search?q=${encodeURIComponent(q)}`),
@@ -16,7 +23,7 @@ export const api = {
     selectSource: (id, source, account) => req(`/api/control/${id}/source?name=${encodeURIComponent(source)}&account=${encodeURIComponent(account || '')}`),
     tuneInPlay: (deviceId, item) => req(`/api/tunein/play/${deviceId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
         body: JSON.stringify(item),
     }),
 };
