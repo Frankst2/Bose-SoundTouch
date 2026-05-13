@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eo pipefail
 
-VERSION=${VERSION:-0.74.0}
+VERSION=${VERSION:-0.77.0}
 GH_REPO_BINARY=${GH_REPO_BINARY:-gesellix/Bose-SoundTouch}
 GH_REPO_SCRIPTS=${GH_REPO_SCRIPTS:-Frankst2/Bose-SoundTouch}
 BINARY_URL=${BINARY_URL:-https://github.com/$GH_REPO_BINARY/releases/download/v$VERSION/soundtouch-service-v$VERSION-linux-armv7}
@@ -13,15 +13,15 @@ rm -rf "$UPDATE_TMP_DIR" || true
 mkdir -p "$UPDATE_TMP_DIR"
 
 echo "Installing Aftertouch $VERSION ..."
-mkdir -p /media/sda1/opt/aftertouch
+mkdir -p /mnt/nv/opt/aftertouch
 curl \
   -sSL \
   -o "$UPDATE_TMP_DIR/binary" \
   --fail \
   "$BINARY_URL"
 
-mv "$UPDATE_TMP_DIR/binary" /media/sda1/opt/aftertouch/aftertouch-service
-chmod +x /media/sda1/opt/aftertouch/aftertouch-service
+mv "$UPDATE_TMP_DIR/binary" /mnt/nv/opt/aftertouch/aftertouch-service
+chmod +x /mnt/nv/opt/aftertouch/aftertouch-service
 
 echo "Creating init script..."
 curl \
