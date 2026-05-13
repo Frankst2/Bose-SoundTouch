@@ -12,9 +12,9 @@
 
 NAME="aftertouch-service"
 DESC="Bose AfterTouch service"
-DAEMON="/media/sda1/opt/aftertouch/aftertouch-service"
+DAEMON="/mnt/nv/opt/aftertouch/aftertouch-service"
 PIDFILE="/var/run/$NAME.pid"
-DATADIR="/media/sda1/opt/aftertouch/data"
+DATADIR="/mnt/nv/opt/aftertouch/data"
 SCRIPTNAME="/etc/init.d/$NAME"
 USER="root"
 
