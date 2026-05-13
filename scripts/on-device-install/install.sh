@@ -12,15 +12,15 @@ rm -rf "$UPDATE_TMP_DIR" || true
 mkdir -p "$UPDATE_TMP_DIR"
 
 echo "Installing Aftertouch $VERSION ..."
-mkdir -p /opt/aftertouch
+mkdir -p /media/sda1/opt/aftertouch
 curl \
   -sSL \
   -o "$UPDATE_TMP_DIR/binary" \
   --fail \
   "$BINARY_URL"
 
-mv "$UPDATE_TMP_DIR/binary" /opt/aftertouch/aftertouch-service
-chmod +x /opt/aftertouch/aftertouch-service
+mv "$UPDATE_TMP_DIR/binary" /media/sda1/opt/aftertouch/aftertouch-service
+chmod +x /media/sda1/opt/aftertouch/aftertouch-service
 
 echo "Creating init script..."
 curl \
