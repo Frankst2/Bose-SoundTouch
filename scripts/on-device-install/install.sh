@@ -2,9 +2,10 @@
 set -eo pipefail
 
 VERSION=${VERSION:-0.74.0}
-GH_REPO=${GH_REPO:-Frankst2/Bose-SoundTouch}
-BINARY_URL=${BINARY_URL:-https://github.com/$GH_REPO/releases/download/v$VERSION/soundtouch-service-v$VERSION-linux-armv7}
-INIT_SCRIPT_URL=${INIT_SCRIPT_URL:-https://raw.githubusercontent.com/$GH_REPO/v$VERSION/scripts/on-device-install/aftertouch}
+GH_REPO_BINARY=${GH_REPO:-gesellix/Bose-SoundTouch}
+GH_REPO_SCRIPTS=${GH_REPO:-Frankst2/Bose-SoundTouch}
+BINARY_URL=${BINARY_URL:-https://github.com/$GH_REPO_BINARY/releases/download/v$VERSION/soundtouch-service-v$VERSION-linux-armv7}
+INIT_SCRIPT_URL=${INIT_SCRIPT_URL:-https://raw.githubusercontent.com/$GH_REPO_SCRIPTS/v$VERSION/scripts/on-device-install/aftertouch}
 UPDATE_TMP_DIR=${UPDATE_TMP_DIR:-/media/aftertouch}
 
 
