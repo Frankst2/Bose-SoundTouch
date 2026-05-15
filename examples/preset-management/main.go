@@ -226,7 +226,7 @@ func storeRadioStation(c *client.Client) error {
 	radioContent := &models.ContentItem{
 		Source:        "TUNEIN",
 		Type:          "stationurl",
-		Location:      "/v1/playbook/station/s33828", // K-LOVE
+		Location:      "/v1/playback/station/s33828", // K-LOVE
 		SourceAccount: "",
 		IsPresetable:  true,
 		ItemName:      "K-LOVE Radio",
@@ -329,7 +329,7 @@ func demonstrateWebSocketEvents(c *client.Client) error {
 		testContent := &models.ContentItem{
 			Source:        "TUNEIN",
 			Type:          "stationurl",
-			Location:      "/v1/playbook/station/s25111", // BBC Radio 1
+			Location:      "/v1/playback/station/s25111", // BBC Radio 1
 			SourceAccount: "",
 			IsPresetable:  true,
 			ItemName:      "BBC Radio 1",

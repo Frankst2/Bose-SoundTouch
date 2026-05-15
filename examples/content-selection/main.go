@@ -209,7 +209,7 @@ func demoGenericContentItem(c *client.Client) error {
 	contentItem := &models.ContentItem{
 		Source:        "TUNEIN",
 		Type:          "stationurl",
-		Location:      "/v1/playbook/station/s33828", // K-LOVE Radio
+		Location:      "/v1/playback/station/s33828", // K-LOVE Radio
 		SourceAccount: "",
 		IsPresetable:  true,
 		ItemName:      "K-LOVE Radio",

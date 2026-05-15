@@ -71,7 +71,7 @@ go run . 192.168.1.100
 
     2. K-LOVE Radio
        Source: TUNEIN
-       Location: /v1/playbook/station/s33828
+       Location: /v1/playback/station/s33828
        Created: 2024-01-15 09:15:00
 
   🆓 Available slots: [3 4 5 6]
@@ -179,7 +179,7 @@ Location: "spotify:track:17GmwQ9Q3MTAz05OokmNNB"
 
 ```go
 // TuneIn
-Location: "/v1/playbook/station/s33828"
+Location: "/v1/playback/station/s33828"
 
 // Internet Radio
 Location: "https://stream.example.com/radio"

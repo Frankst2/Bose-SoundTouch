@@ -140,7 +140,7 @@ err := client.AddStation("TUNEIN", "", "c121508", "Jazz FM")
 // Remove station from collection
 contentItem := &models.ContentItem{
     Source:   "TUNEIN",
-    Location: "/v1/playbook/station/s33828",
+    Location: "/v1/playback/station/s33828",
 }
 err := client.RemoveStation(contentItem)
 ```

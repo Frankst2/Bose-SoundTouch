@@ -474,7 +474,7 @@ Catch-all endpoint that signals the matching pre-flight probe channel. Used inte
 #### `GET /bmx/registry/v1/services`
 Returns available media services for device registration.
 
-#### `GET /bmx/tunein/v1/playbook/station/{stationID}`
+#### `GET /bmx/tunein/v1/playback/station/{stationID}`
 Provides TuneIn station playback information.
 
 #### `GET /bmx/tunein/v1/podcast/{podcastID}`
