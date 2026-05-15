@@ -139,7 +139,7 @@ soundtouch-cli --host 192.168.1.10 preset store \
 soundtouch-cli --host 192.168.1.10 preset store \
   --slot 2 \
   --source TUNEIN \
-  --location "/v1/playbook/station/s33828" \
+  --location "/v1/playback/station/s33828" \
   --name "K-LOVE Radio"
 
 # Store internet radio
@@ -956,7 +956,7 @@ soundtouch-cli --host 192.168.1.10 station add \
 # Remove a station (use location from browse/search results)
 soundtouch-cli --host 192.168.1.10 station remove \
   --source TUNEIN \
-  --location "/v1/playbook/station/s33828"
+  --location "/v1/playback/station/s33828"
 ```
 
 **Workflow Example - Discover and Play New Content:**

@@ -309,7 +309,7 @@ Now Playing:
   Track: K-LOVE Radio
   
 Content Details:
-  Location: /v1/playbook/station/s33828
+  Location: /v1/playback/station/s33828
 ```
 
 **LOCAL_INTERNET_RADIO:**
@@ -341,7 +341,7 @@ go run ./cmd/soundtouch-cli --host 192.168.1.100 play now --verbose
 Shows additional information:
 ```
 Content Details:
-  Location: /v1/playbook/station/s33828
+  Location: /v1/playback/station/s33828
   Content Type: stationurl
   Item Name: K-LOVE Radio
   Presetable: true
@@ -367,7 +367,7 @@ Content Details:
 | **Spotify Album** | `spotify:album:ID` | `spotify:album:4aawyAB9vmqN3uQ7FjRGTy` |
 | **Spotify Artist** | `spotify:artist:ID` | `spotify:artist:6APm8EjxOHSYM5B4i3vT3q` |
 | **Spotify Track** | `spotify:track:ID` | `spotify:track:17GmwQ9Q3MTAz05OokmNNB` |
-| **TUNEIN Radio** | `/v1/playbook/station/ID` | `/v1/playbook/station/s33828` |
+| **TUNEIN Radio** | `/v1/playback/station/ID` | `/v1/playback/station/s33828` |
 | **Internet Radio** | `URL or encoded URL` | `https://stream.example.com/radio` |
 | **STORED_MUSIC** | `Container ID` | `6_a2874b5d_4f83d999` |
 | **LOCAL_MUSIC** | `album:ID` or `track:ID` | `album:983`, `track:2579` |

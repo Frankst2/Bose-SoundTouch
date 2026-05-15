@@ -83,7 +83,7 @@ go run main.go 192.168.1.100
   🎯 Using generic ContentItem selection...
       Content: K-LOVE Radio
       Source: TUNEIN
-      Location: /v1/playbook/station/s33828
+      Location: /v1/playback/station/s33828
   ✅ Successfully selected content using ContentItem
 
 ✅ Content selection demo completed!

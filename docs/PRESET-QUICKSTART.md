@@ -35,7 +35,7 @@ soundtouch-cli --host 192.168.1.100 preset store \
 soundtouch-cli --host 192.168.1.100 preset store \
   --slot 3 \
   --source TUNEIN \
-  --location "/v1/playbook/station/s33828" \
+  --location "/v1/playback/station/s33828" \
   --name "K-LOVE Radio"
 ```
 
@@ -103,7 +103,7 @@ Just replace `https://open.spotify.com/` with `spotify:` and `/` with `:`.
 ### Radio Stations
 ```bash
 # TuneIn Radio
---source TUNEIN --location "/v1/playbook/station/s33828"
+--source TUNEIN --location "/v1/playback/station/s33828"
 
 # Internet Radio Stream
 --source LOCAL_INTERNET_RADIO --location "https://stream.example.com/jazz"
@@ -249,7 +249,7 @@ soundtouch-cli --host 192.168.1.100 preset store \
 # Kids' bedtime stories
 soundtouch-cli --host 192.168.1.100 preset store \
   --slot 3 --source TUNEIN \
-  --location "/v1/playbook/station/bedtime-stories" \
+  --location "/v1/playback/station/bedtime-stories" \
   --name "Bedtime Stories"
 ```
 
